@@ -57,15 +57,21 @@ public final class ConsoleUI {
 
     public void mainMenu(List<String> options) {
         section("MAIN MENU");
+        int width = Math.max(40, Math.min(76, terminalWidth() - 4));
+        String border = "+" + "-".repeat(width - 2) + "+";
+        System.out.println(style.paint(border, ConsoleStyle.Tone.MUTED));
         for (int index = 0; index < options.size(); index++) {
-            System.out.printf("  %s  %s%n", style.paint(String.format("%02d", index + 1),
-                    ConsoleStyle.Tone.PRIMARY), options.get(index));
+            menuRow(String.format("%02d", index + 1), options.get(index), width,
+                    ConsoleStyle.Tone.PRIMARY);
         }
+        menuRow(" 0", "Exit", width, ConsoleStyle.Tone.MUTED);
+        System.out.println(style.paint(border, ConsoleStyle.Tone.MUTED));
     }
 
     public void panel(String title, List<String> details) {
-        int width = Math.min(Math.min(84, terminalWidth() - 2),
-            Math.max(28, details.stream().mapToInt(String::length).max().orElse(0) + 4));
+        int contentWidth = details.stream().mapToInt(String::length).max().orElse(0) + 4;
+        int width = Math.max(28, Math.min(84,
+                Math.min(terminalWidth() - 2, Math.max(28, contentWidth))));
         String border = "+" + "-".repeat(width - 2) + "+";
         System.out.println(style.paint(border, ConsoleStyle.Tone.MUTED));
         System.out.println("| " + pad(title, width - 4) + " |");
@@ -77,19 +83,19 @@ public final class ConsoleUI {
     }
 
     public void success(String message) {
-        System.out.println(style.paint("SUCCESS  " + message, ConsoleStyle.Tone.SUCCESS));
+        printMessage("SUCCESS", message, ConsoleStyle.Tone.SUCCESS);
     }
 
     public void info(String message) {
-        System.out.println(style.paint("INFO     " + message, ConsoleStyle.Tone.PRIMARY));
+        printMessage("INFO", message, ConsoleStyle.Tone.PRIMARY);
     }
 
     public void warning(String message) {
-        System.out.println(style.paint("WARNING  " + message, ConsoleStyle.Tone.WARNING));
+        printMessage("WARNING", message, ConsoleStyle.Tone.WARNING);
     }
 
     public void error(String message) {
-        System.out.println(style.paint("ERROR    " + message, ConsoleStyle.Tone.ERROR));
+        printMessage("ERROR", message, ConsoleStyle.Tone.ERROR);
     }
 
     public boolean confirm(ConsoleInput input, String prompt) {
@@ -118,6 +124,42 @@ public final class ConsoleUI {
         int left = Math.max(0, (inner - text.length()) / 2);
         System.out.println("| " + " ".repeat(left)
                 + style.paint(text, tone) + pad("", inner - left - text.length()) + " |");
+    }
+
+    private void menuRow(String number, String label, int width, ConsoleStyle.Tone tone) {
+        int innerWidth = width - 4;
+        String prefix = " " + number + "  ";
+        String visible = prefix + label;
+        String fitted = visible.length() <= innerWidth ? visible
+                : visible.substring(0, Math.max(0, innerWidth - 3)) + "...";
+        int padding = Math.max(0, innerWidth - fitted.length());
+        System.out.println("| " + style.paint(prefix, tone) + fitted.substring(prefix.length())
+                + " ".repeat(padding) + " |");
+    }
+
+    private void printMessage(String label, String message, ConsoleStyle.Tone tone) {
+        String prefix = label + "  ";
+        int lineWidth = Math.max(40, terminalWidth() - 4);
+        int available = Math.max(12, lineWidth - prefix.length());
+        StringBuilder line = new StringBuilder(prefix);
+        int current = 0;
+        for (String word : message.split("\\s+")) {
+            if (word.isEmpty()) {
+                continue;
+            }
+            if (current > 0 && current + 1 + word.length() > available) {
+                System.out.println(style.paint(line.toString(), tone));
+                line = new StringBuilder(" ".repeat(prefix.length()));
+                current = 0;
+            }
+            if (current > 0) {
+                line.append(' ');
+                current++;
+            }
+            line.append(word);
+            current += word.length();
+        }
+        System.out.println(style.paint(line.toString(), tone));
     }
 
     private int terminalWidth() {

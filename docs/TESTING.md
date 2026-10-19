@@ -14,7 +14,7 @@ Pure unit tests do not require MySQL:
 - `StudentServiceTest`: required fields, email validation, normalization, and invalid IDs.
 - `AttendanceCalculatorTest`: percentages, zero sessions, target forecasts, impossible targets, invalid counts.
 - `ConsoleInputTest`: valid values, empty/malformed input, range checks, and date parsing.
-- `ConsoleStyleTest`, `ConsoleTableTest`, `ConsoleUITest`: no-color output, ANSI styling, truncation/alignment, and progress bars.
+- `ConsoleStyleTest`, `ConsoleTableTest`, `ConsoleUITest`: no-color output, ANSI styling, responsive tables, and progress bars.
 - `CsvExporterTest`: quoting, embedded newline/quote escaping, and no-overwrite behavior.
 - `BulkAttendanceServiceTest`: existing rows, duplicate roster items, and partial failure reporting.
 - `AttendancePolicyTest`: configurable target validation.
@@ -22,7 +22,7 @@ Pure unit tests do not require MySQL:
 - `CsvExporterTest`: UTF-8 quoting, embedded quotes/newlines, and overwrite safety.
 - `BulkAttendanceServiceTest`: existing rows, duplicate roster items, and partial-failure reporting.
 
-The latest recorded Surefire result for this working tree was 14 unit tests passed, 0 failed, and 1 MySQL integration test skipped.
+Verification on 2026-10-19: `mvn clean verify` succeeded with 29 tests run, 0 failures, 0 errors, and 1 skipped (28 passed). The skipped test is the opt-in MySQL integration test; no separate `_test` database was configured. This result covers the default local test suite, not MySQL persistence.
 
 ## MySQL Integration Test
 

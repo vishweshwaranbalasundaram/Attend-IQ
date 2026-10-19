@@ -43,7 +43,7 @@ public class App {
             UI.mainMenu(List.of("Dashboard", "Student Management", "Faculty Management",
                     "Subject Management", "Enrollment Management", "Class Session Management",
                     "Attendance Management", "Reports & Analytics", "Export Reports",
-                    "System & Database", "Help & Shortcuts", "Exit"));
+                    "System & Database", "Help & Shortcuts"));
             try {
                 int choice = readInt("Choose: ");
                 switch (choice) {
@@ -58,7 +58,7 @@ public class App {
                     case 9 -> exportMenu();
                     case 10 -> systemMenu();
                     case 11 -> helpMenu();
-                    case 12 -> {
+                    case 0, 12 -> {
                         UI.success("Attend-IQ closed.");
                         return;
                     }
@@ -106,17 +106,33 @@ public class App {
             : (summary.presentToday() + summary.onDutyToday()) * 100.0 / expectedToday;
         UI.info("Today's attended rate (Present + On-duty / enrolled roster): "
             + UI.progressBar(todayRate, 24));
-        UI.panel("QUICK ACTIONS", List.of(
-                "7  Attendance management",
-                "2  Search/manage students",
-                "6  Create a class session",
-                "8  Reports and shortage analysis",
-                "10 Test database and inspect server version"));
         List<String> activity = summary.recentActivity().stream().map(event ->
             "#" + event.auditId() + " " + event.eventType() + " session " + event.sessionId()
                 + ", student " + event.studentId() + " at " + event.recordedAt()).toList();
         UI.panel("RECENT ATTENDANCE ACTIVITY", activity.isEmpty()
             ? List.of("No attendance activity has been recorded yet.") : activity);
+        UI.panel("QUICK ACTIONS", List.of(
+                "1  Mark attendance",
+                "2  Search for a student",
+                "3  Create a class session",
+                "4  View shortage report",
+                "5  Open attendance reports",
+                "6  Test database connectivity"));
+        UI.menu("DASHBOARD QUICK ACTIONS", List.of("Mark attendance", "Search for a student",
+                "Create a class session", "View shortage report", "Open attendance reports",
+                "Test database connectivity"));
+        switch (readInt("Quick action (0 to skip): ")) {
+            case 1 -> markAttendance();
+            case 2 -> showStudents(STUDENTS.searchStudents(readText("Name or registration prefix: ")));
+            case 3 -> showSessions(List.of(CATALOG.createSession(readLong("Subject ID: "),
+                    readDate("Class date (YYYY-MM-DD): "), readInt("Period (1-12): "))));
+            case 4 -> showShortageReports();
+            case 5 -> reportsMenu();
+            case 6 -> UI.success(Database.testConnection()
+                    ? "MySQL connection is valid." : "MySQL connection is not valid.");
+            case 0 -> { }
+            default -> UI.warning("Choose a quick action from the list.");
+        }
     }
 
     private static void attendanceMenu() throws SQLException {
@@ -361,7 +377,7 @@ public class App {
         UI.panel("HELP & SHORTCUTS", List.of(
                 "Enter the number shown to open a menu option.",
                 "Enter 0 in a submenu to return to the main menu.",
-                "Enter 12 in the main menu to exit.",
+                "Enter 0 in the main menu to exit (12 is also accepted).",
                 "Attendance correction uses the assigned faculty ID as an academic check only.",
                 "Set ATTENDIQ_COLOR=never for plain text or ATTENDIQ_COLOR=always to force ANSI colors.",
                 "MySQL integration tests require the separate attendiq_java_test database."));

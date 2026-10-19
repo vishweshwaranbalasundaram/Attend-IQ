@@ -18,6 +18,6 @@
 8. Export a report and demonstrate that an existing CSV requires confirmation before overwrite.
 9. Correct attendance with a reason and inspect the audit history. Explain that the claimed faculty ID is not authenticated.
 10. Demonstrate bulk marking using a fresh session; explain per-row commits and partial results.
-11. Exit with main-menu option `12`.
+11. Exit with main-menu option `0` (`12` remains accepted for compatibility).
 
 Use a fresh session/fixture for repeat demos or remove only the demo attendance record through its explicit menu operation. Do not reset or drop the database during the demonstration.

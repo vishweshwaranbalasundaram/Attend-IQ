@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="600" viewBox="0 0 1100 600" role="img" aria-labelledby="title desc">
+  <title id="title">Illustrative Attend-IQ console preview</title>
+  <desc id="desc">A clearly illustrative terminal mockup with dashboard labels and placeholder values, not a live screenshot</desc>
+  <rect width="1100" height="600" rx="18" fill="#0b1020"/>
+  <path d="M0 18Q0 0 18 0h1064q18 0 18 18v42H0z" fill="#1e293b"/>
+  <circle cx="28" cy="30" r="7" fill="#fb7185"/><circle cx="52" cy="30" r="7" fill="#fbbf24"/><circle cx="76" cy="30" r="7" fill="#34d399"/>
+  <text x="550" y="36" text-anchor="middle" fill="#cbd5e1" font-family="Segoe UI,Arial,sans-serif" font-size="16">ATTEND-IQ CONSOLE · ILLUSTRATIVE LAYOUT</text>
+  <text x="50" y="105" fill="#c4b5fd" font-family="Consolas,monospace" font-size="26" font-weight="700">ATTEND-IQ</text>
+  <text x="50" y="136" fill="#67e8f9" font-family="Consolas,monospace" font-size="15">SMART ATTENDANCE MANAGEMENT SYSTEM · JAVA OOP · JDBC · MYSQL</text>
+  <text x="50" y="174" fill="#94a3b8" font-family="Consolas,monospace" font-size="14">DATABASE: STATUS IS CHECKED AT RUNTIME</text>
+  <path d="M50 194h1000" stroke="#334155"/>
+  <text x="50" y="234" fill="#38bdf8" font-family="Consolas,monospace" font-size="19" font-weight="700">LIVE DASHBOARD</text>
+  <rect x="50" y="253" width="480" height="138" rx="10" fill="#111a2e" stroke="#334155"/>
+  <text x="72" y="284" fill="#c4b5fd" font-family="Consolas,monospace" font-size="15">ACADEMIC OVERVIEW</text>
+  <text x="72" y="317" fill="#e2e8f0" font-family="Consolas,monospace" font-size="15">Students ............ [database value]</text>
+  <text x="72" y="346" fill="#e2e8f0" font-family="Consolas,monospace" font-size="15">Faculty / Subjects .. [database values]</text>
+  <text x="72" y="375" fill="#e2e8f0" font-family="Consolas,monospace" font-size="15">Enrollments ......... [database value]</text>
+  <rect x="550" y="253" width="500" height="138" rx="10" fill="#111a2e" stroke="#334155"/>
+  <text x="572" y="284" fill="#c4b5fd" font-family="Consolas,monospace" font-size="15">TODAY'S ATTENDANCE</text>
+  <text x="572" y="317" fill="#34d399" font-family="Consolas,monospace" font-size="15">Present / On-duty ... [database values]</text>
+  <text x="572" y="346" fill="#fb7185" font-family="Consolas,monospace" font-size="15">Absent ............. [database value]</text>
+  <text x="572" y="375" fill="#fbbf24" font-family="Consolas,monospace" font-size="15">Unmarked ........... [database value]</text>
+  <text x="50" y="435" fill="#38bdf8" font-family="Consolas,monospace" font-size="17">QUICK ACTIONS</text>
+  <text x="50" y="469" fill="#e2e8f0" font-family="Consolas,monospace" font-size="15">1 Mark attendance   2 Search student   3 Create class session</text>
+  <text x="50" y="500" fill="#e2e8f0" font-family="Consolas,monospace" font-size="15">4 Shortage report   5 Reports          6 Database check</text>
+  <path d="M50 526h1000" stroke="#334155"/>
+  <text x="50" y="562" fill="#94a3b8" font-family="Consolas,monospace" font-size="14">ILLUSTRATION ONLY · VALUES ABOVE ARE PLACEHOLDERS</text>
+</svg>

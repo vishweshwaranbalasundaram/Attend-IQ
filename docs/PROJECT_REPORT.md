@@ -49,7 +49,7 @@ The normalized MySQL schema uses generated primary keys, foreign keys, unique st
 
 ## Test Status
 
-The latest executed Surefire reports show 14 unit tests passed, 0 failed, and 1 opt-in MySQL test skipped. Maven test compilation succeeded. The integration test requires a separately configured `attendiq_java_test` database and has not been run in this environment.
+On 2026-10-19, `mvn clean verify` succeeded: 28 tests passed, with 0 failures, 0 errors, and 1 skipped opt-in MySQL integration test. The integration test requires a separately configured `attendiq_java_test` database and was not run.
 
 ## Limitations and Future Work
 
