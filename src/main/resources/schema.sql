@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS enrollments (
     CONSTRAINT fk_enrollment_student FOREIGN KEY (student_id)
         REFERENCES students(student_id) ON DELETE CASCADE,
     CONSTRAINT fk_enrollment_subject FOREIGN KEY (subject_id)
-        REFERENCES subjects(subject_id) ON DELETE CASCADE
+        REFERENCES subjects(subject_id) ON DELETE CASCADE,
+    INDEX idx_enrollments_subject_student (subject_id, student_id)
 );
 
 CREATE TABLE IF NOT EXISTS class_sessions (
@@ -44,7 +45,8 @@ CREATE TABLE IF NOT EXISTS class_sessions (
     CONSTRAINT fk_session_subject FOREIGN KEY (subject_id)
         REFERENCES subjects(subject_id),
     CONSTRAINT uq_subject_date_period UNIQUE (subject_id, class_date, period_number),
-    CONSTRAINT chk_period CHECK (period_number BETWEEN 1 AND 12)
+    CONSTRAINT chk_period CHECK (period_number BETWEEN 1 AND 12),
+    INDEX idx_class_sessions_subject_date (subject_id, class_date)
 );
 
 CREATE TABLE IF NOT EXISTS attendance_records (
@@ -57,8 +59,38 @@ CREATE TABLE IF NOT EXISTS attendance_records (
         REFERENCES class_sessions(session_id) ON DELETE CASCADE,
     CONSTRAINT fk_attendance_student FOREIGN KEY (student_id)
         REFERENCES students(student_id) ON DELETE CASCADE,
-    CONSTRAINT uq_attendance_per_student_session UNIQUE (session_id, student_id)
+    CONSTRAINT uq_attendance_per_student_session UNIQUE (session_id, student_id),
+    INDEX idx_attendance_student_session (student_id, session_id)
 );
+
+CREATE TABLE IF NOT EXISTS attendance_audit_log (
+    audit_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    session_id BIGINT NOT NULL,
+    student_id BIGINT NOT NULL,
+    event_type ENUM('MARKED', 'CORRECTED', 'DELETED') NOT NULL,
+    previous_status ENUM('PRESENT', 'ABSENT', 'ON_DUTY') NULL,
+    new_status ENUM('PRESENT', 'ABSENT', 'ON_DUTY') NULL,
+    reason VARCHAR(1000) NULL,
+    claimed_faculty_id BIGINT NULL,
+    recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_attendance_audit_session FOREIGN KEY (session_id)
+        REFERENCES class_sessions(session_id),
+    CONSTRAINT fk_attendance_audit_student FOREIGN KEY (student_id)
+        REFERENCES students(student_id),
+    CONSTRAINT fk_attendance_audit_faculty FOREIGN KEY (claimed_faculty_id)
+        REFERENCES faculty(faculty_id),
+    INDEX idx_attendance_audit_session_student (session_id, student_id),
+    INDEX idx_attendance_audit_recorded_at (recorded_at)
+);
+
+CREATE TABLE IF NOT EXISTS schema_migrations (
+    version VARCHAR(32) PRIMARY KEY,
+    description VARCHAR(255) NOT NULL,
+    applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT IGNORE INTO schema_migrations (version, description)
+VALUES ('V1', 'AttendIQ Core baseline schema');
 
 -- Optional demo records. Run once after creating the schema.
 INSERT IGNORE INTO faculty (faculty_id, full_name, email)

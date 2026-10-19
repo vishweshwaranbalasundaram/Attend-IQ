@@ -1,6 +1,8 @@
 # AttendIQ Java Attendance
 
-A console-based attendance MVP built with Java 25, JDBC, and MySQL. It validates that a class session exists and that the student is enrolled before recording attendance. The current application supports creating and retrieving attendance records; it does not yet provide full CRUD for every database entity.
+A polished console-based academic attendance system built with Java 25, JDBC, and MySQL. It includes a live dashboard, ANSI-aware paginated tables, CRUD management for students/faculty/subjects/enrollments/sessions, single and bulk attendance, corrections with transactional audit history, reports, and safe CSV exports. It remains a standard-library console app; no frontend or GUI is included.
+
+**Problem:** manual attendance is difficult to validate consistently and can produce duplicate or untraceable marks. **Objective:** demonstrate a clear Java OOP/JDBC workflow that checks the session and enrollment, commits a single attendance record, and reports attendance from persisted MySQL data.
 
 ## Technology Stack
 
@@ -17,17 +19,25 @@ The project targets Java 25 through `maven.compiler.release`. VS Code with the E
 
 ## Architecture
 
-The console application delegates workflow and validation to a service. The service opens the transaction and calls the repository, which performs parameterized SQL operations over JDBC.
+`ConsoleUI`/`ConsoleTable` render menus, panels, colors, and paginated tables. `App` gathers input and delegates to service classes. Services validate requests and coordinate transactions; repository interfaces separate use cases from JDBC implementations. Repositories execute parameterized SQL, and `Database` owns environment-based connection configuration.
 
 ```mermaid
 flowchart LR
-	User[User] --> App[Console UI: App]
-	App --> Service[AttendanceService]
-	Service -->|validation and transaction| Repository[AttendanceRepository]
-	Service -->|open JDBC connection| Database[Database]
-	Database --> Driver[MySQL Connector/J]
-	Repository -->|parameterized SQL| Driver
-	Driver --> MySQL[(MySQL: attendiq_java)]
+	User[User] --> Input[ConsoleInput]
+	Input --> App[Presentation: App]
+	App --> AttendanceService
+	App --> StudentService
+	App --> CatalogService[AcademicCatalogService]
+	AttendanceService --> AttendanceRepository
+	StudentService --> StudentPort[StudentRepository interface]
+	StudentPort -. implemented by .-> JdbcStudent[JdbcAcademicRepository]
+	CatalogService --> CatalogPort[AcademicCatalogRepository interface]
+	CatalogPort -. implemented by .-> JdbcCatalog[JdbcAcademicCatalogRepository]
+	AttendanceRepository --> Database[Database]
+	JdbcStudent --> Database
+	JdbcCatalog --> Database
+	Database --> Connector[MySQL Connector/J]
+	Connector --> MySQL[(MySQL: attendiq_java)]
 ```
 
 ### Mark Attendance Flow
@@ -109,20 +119,22 @@ erDiagram
 
 `ENROLLMENTS` uses `(student_id, subject_id)` as a composite primary key. A class session is unique per subject, date, and period. Attendance status is restricted to `PRESENT`, `ABSENT`, or `ON_DUTY`.
 
+V3 adds `attendance_audit_log`, which records successful attendance marks, corrections, and deletions in the same transaction as the attendance operation. Correction/deletion rows include previous and new statuses, reason, and the **claimed** faculty ID. The console does not authenticate that ID. Failed attempts and general catalog CRUD are not audit-logged.
+
 ## CRUD Operations
 
 CRUD means Create, Read, Update, and Delete. This table describes operations available in the Java application, not just tables present in the schema.
 
 | Entity | Create | Read | Update | Delete |
 | --- | --- | --- | --- | --- |
-| Attendance | Implemented: mark a student present, absent, or on duty | Implemented: retrieve by session ID and student ID | Not implemented | Not implemented |
-| Student | Not implemented in the app; demo row is seeded by SQL | Not implemented | Not implemented | Not implemented |
-| Faculty | Not implemented in the app; demo row is seeded by SQL | Not implemented | Not implemented | Not implemented |
-| Subject | Not implemented in the app; demo row is seeded by SQL | Not implemented | Not implemented | Not implemented |
-| Enrollment | Not implemented in the app; demo relation is seeded by SQL | Used internally to validate marking | Not implemented | Not implemented |
-| Class session | Not implemented in the app; demo session is seeded by SQL | Used internally to validate marking | Not implemented | Not implemented |
+| Student | Yes | By ID, list, search by name/registration prefix | Yes | Only without enrollment or attendance history |
+| Faculty | Yes | List and by ID | Yes | MySQL foreign keys reject deletion while assigned subjects exist |
+| Subject | Yes, with assigned faculty | List and by ID | Yes | Only without enrollment or sessions |
+| Enrollment | Yes | List, subjects by student, students by subject | N/A; change by remove and re-enroll, only with no attendance history | Yes, only without attendance history |
+| Class session | Yes | List, by ID, and by subject/date range | Yes, only before attendance is recorded | Yes, only without attendance history |
+| Attendance | Mark Present, Absent, or On-duty | By session/student, by student, by session, or subject/date range | Assigned faculty may correct status; reason required | Assigned faculty may delete a record; reason required |
 
-The attendance workflow is exposed through `AttendanceService.markAttendance()` and `AttendanceService.getAttendance()`. Student, faculty, subject, enrollment, and class-session management menus and service methods remain future work.
+Attendance update/delete checks that the supplied faculty ID is assigned to the session's subject and locks the session during the operation. This is an academic console authorization check, not authenticated identity: a production system would require login and role enforcement.
 
 ## Project Layout
 
@@ -131,16 +143,14 @@ java-attendance/
 |-- pom.xml
 |-- README.md
 |-- src/
-|   |-- main/
-|       |-- java/com/attendiq/
-|       |   |-- App.java
-|       |   |-- AttendanceRecord.java
-|       |   |-- AttendanceRepository.java
-|       |   |-- AttendanceService.java
-|       |   |-- AttendanceStatus.java
-|       |   `-- Database.java
-|       `-- resources/schema.sql
-`-- .gitignore
+|   |-- main/java/com/attendiq/   # console UI, services, domain records, JDBC repositories
+|   |-- main/resources/schema.sql
+|   |-- test/java/com/attendiq/   # unit and opt-in MySQL integration tests
+|   `-- test/resources/schema-test.sql
+|-- database/migrations/          # V2 indexes and V3 attendance audit history
+|-- exports/                      # CSV output, ignored by Git
+|-- docs/                        # architecture, schema, testing, report, demo, viva
+`-- pom.xml, README.md, .gitignore
 ```
 
 ## Requirements
@@ -154,7 +164,7 @@ java-attendance/
 
 ### 1. Create the schema and demo records
 
-In MySQL Workbench, open `src/main/resources/schema.sql` and execute the script. It creates the `attendiq_java` database, six tables, and demo records:
+In MySQL Workbench, open `src/main/resources/schema.sql` and execute the script. It creates the `attendiq_java` database, seven application tables plus `schema_migrations`, and demo records:
 
 | Record | Demo ID/value |
 | --- | --- |
@@ -178,6 +188,8 @@ $env:Path = "$env:JAVA_HOME\bin;$HOME\.maven\maven-3.9.15\bin;$env:Path"
 $env:ATTENDIQ_DB_URL = 'jdbc:mysql://localhost:3306/attendiq_java?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC'
 $env:ATTENDIQ_DB_USER = 'root'
 $env:ATTENDIQ_DB_PASSWORD = 'YOUR_MYSQL_PASSWORD'
+$env:ATTENDIQ_ATTENDANCE_TARGET = '75'
+$env:ATTENDIQ_COLOR = 'always' # use 'never' for plain output; omit for auto-detection
 ```
 
 The `allowPublicKeyRetrieval=true` URL option is included for local development with non-TLS MySQL authentication. Prefer TLS with certificate verification for remote or production database connections. If the MySQL account has no password, set `ATTENDIQ_DB_PASSWORD` to an empty string.
@@ -191,20 +203,62 @@ mvn clean verify
 mvn exec:java
 ```
 
-The application menu offers:
+The root menu is: 1 Dashboard, 2 Students, 3 Faculty, 4 Subjects, 5 Enrollments, 6 Class sessions, 7 Attendance, 8 Reports, 9 CSV exports, 10 System/Database, 11 Help, 12 Exit. Submenus use `0` to return. Colors are enabled in Windows Terminal/VS Code terminals when supported; `NO_COLOR=1` or `ATTENDIQ_COLOR=never` disables ANSI colors, while `ATTENDIQ_COLOR=always` forces them.
 
-1. **Mark attendance**: enter session ID `1`, student ID `1`, and status `1` (`PRESENT`), `2` (`ABSENT`), or `3` (`ON_DUTY`).
-2. **Retrieve attendance record**: enter the session and student IDs.
-0. **Exit**.
+CRUD submenus provide the applicable list/view/create/update/delete actions. Attendance corrections and deletion require a faculty ID assigned to the session's subject. The demo uses student `1`, subject `1`, faculty `1`, and session `1`. Tables show 12 rows per page; press Enter for the next page or `q` to stop.
 
-Marking the same student twice for one session should be rejected by the unique database constraint.
+Duplicate marks are rejected by the database unique constraint. Bulk marking previews the actual roster, skips existing marks, and reports saved/skipped/failed rows; each accepted row commits independently and never silently overwrites. Deletes that would erase attendance/audit history are refused.
+
+Run `schema.sql` for a fresh database; it uses `CREATE TABLE IF NOT EXISTS` and `INSERT IGNORE`, and does not drop tables or reset data. For an existing V1 database, back it up, then apply `database/migrations/V2__student_name_search_index.sql` followed by `database/migrations/V3__attendance_audit_log.sql`. Both are safe to rerun. The System menu never runs migrations or modifies the database automatically.
+
+## Attendance Reports
+
+For one student and subject, the report counts scheduled sessions from the enrollment date through today. `PRESENT` and `ON_DUTY` count as attended; `ABSENT` and unmarked sessions do not count as attended. Unmarked sessions are reported separately and are included in the denominator, so the policy is visible rather than silently treating missing records as explicit absences.
+
+$$
+P = 100 \times \frac{p + o}{s}
+$$
+
+Here, $p$ is the Present count, $o$ is the On-duty count, and $s$ is scheduled sessions.
+
+With zero scheduled sessions, the calculation returns `0%` and the console reports that no sessions are available. The shortage forecast computes the minimum number of consecutive attended sessions `x` satisfying $(A+x)/(T+x) \ge target/100$, where $A$ is attended and $T$ is scheduled. The default target is 75%; set `ATTENDIQ_ATTENDANCE_TARGET` to an integer from 1 to 100. For a 100% target after a missed session, the result is unreachable.
+
+Dashboard totals are fetched from MySQL on each visit. Today's rate is `(Present + On-duty) / enrolled roster entries expected today`; the below-target statistic counts enrolled student/subject pairs below the configured threshold. Recent activity comes from persisted attendance audit rows. A fresh database displays an honest empty state.
+
+## Bulk, Audit, and Export
+
+- Bulk marking displays the enrolled roster and existing attendance, collects statuses for unmarked students, previews changes, and asks for confirmation. Each row commits independently through `AttendanceService`; partial results are reported and existing attendance is never overwritten.
+- CSV export supports students, attendance filtered by student/session/subject date range, subject summaries, and shortages. Files are UTF-8 with quoted/escaped fields. The default destination is `exports/`, which is ignored by Git. Existing files require explicit overwrite confirmation.
+- V3 records successful attendance marks, corrections, and deletions in the same transaction. Correction/deletion entries include previous/new status, reason, and `claimed_faculty_id`. That ID is user-entered and is not authenticated. Failed attempts and catalog CRUD are not audit-logged; this is not a fraud detector.
+- The System menu tests a real JDBC connection and shows Java/MySQL versions, database name, and last successful in-process connection check without showing credentials.
+
+## OOP Structure
+
+- **Encapsulation and composition:** services keep their repository collaborators in private final fields; `App` composes input, services, and repositories.
+- **Abstraction and polymorphism:** `StudentRepository` and `AcademicCatalogRepository` are contracts implemented by JDBC classes, allowing services to use interfaces.
+- **Records and enums:** immutable data records represent entities/results; `AttendanceStatus` restricts allowed status values.
+- **Inheritance:** no artificial inheritance hierarchy is used because the current domain has no justified is-a relationship.
+- **Transactions:** attendance marking, authorized correction/deletion, and protected catalog deletion commit as a unit and roll back on failure.
 
 ## Validation and Security Notes
 
-- `mvn clean verify` compiles the application and runs the Maven test lifecycle. There are currently no automated test sources, so Maven reports no tests to run.
+- `mvn clean test` runs unit tests for validation, attendance math, console rendering/input, bulk result handling, and CSV output. The MySQL integration test is disabled unless `ATTENDIQ_RUN_MYSQL_IT=true` and uses a database whose name ends in `_test`.
+- To run the integration test, execute `src/test/resources/schema-test.sql` in MySQL Workbench. It creates the separate `attendiq_java_test` database without demo records. Set `ATTENDIQ_DB_URL` to that database, set the usual user/password variables, then run `$env:ATTENDIQ_RUN_MYSQL_IT = 'true'; mvn -Dtest=AttendanceMySqlIntegrationTest test`. Never point integration tests at `attendiq_java` or a production/personal database.
+- `mvn clean verify` compiles production and test code and runs the default test suite.
 - JDBC statements use `PreparedStatement` parameters rather than interpolating user values into SQL.
 - Database credentials are read from environment variables by `Database`; never hard-code or commit real credentials.
-- This is an educational MVP. It has no login, faculty authorization, student/subject maintenance screens, attendance updates/deletes, reporting, or GUI. Do not expose it to real users until authentication, authorization, validation, and operational security are added.
+- This is a college console application, not a production-ready identity system. Faculty correction checks rely on an entered faculty ID and do not authenticate the person. It has no login, role sessions, GUI, or automated MySQL integration run by default.
+
+Latest recorded test result: **14 unit tests passed, 0 failed; 1 opt-in MySQL integration test skipped**. The tests are documented in [docs/TESTING.md](docs/TESTING.md). The integration test was not run against the local attendance database.
+
+## Project and Viva Documents
+
+- [Architecture and OOP design](docs/ARCHITECTURE.md)
+- [Database tables, relationships, and migrations](docs/DATABASE_SCHEMA.md)
+- [Testing commands and integration-test safety](docs/TESTING.md)
+- [Academic project report](docs/PROJECT_REPORT.md)
+- [Faculty demonstration walkthrough](docs/DEMO_SCRIPT.md)
+- [Viva questions and answers](docs/VIVA_QUESTIONS.md)
 
 ## Troubleshooting
 
