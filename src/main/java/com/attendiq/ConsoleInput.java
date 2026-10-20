@@ -1,23 +1,44 @@
 package com.attendiq;
 
 import java.io.InputStream;
+import java.io.Console;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 
 public final class ConsoleInput {
     private final Scanner scanner;
+    private final Console console;
 
     public ConsoleInput(InputStream input) {
         this.scanner = new Scanner(input);
+        this.console = input == System.in ? System.console() : null;
     }
 
     public String readText(String prompt) {
+        if (console != null) {
+            String value = console.readLine("%s", prompt);
+            if (value == null) {
+                throw new ConsoleInputClosedException();
+            }
+            return value.trim();
+        }
         System.out.print(prompt);
         if (!scanner.hasNextLine()) {
             throw new ConsoleInputClosedException();
         }
         return scanner.nextLine().trim();
+    }
+
+    public char[] readPassword(String prompt) {
+        if (console != null) {
+            char[] password = console.readPassword("%s", prompt);
+            if (password == null) {
+                throw new ConsoleInputClosedException();
+            }
+            return password;
+        }
+        return readText(prompt).toCharArray();
     }
 
     public long readLong(String prompt) {

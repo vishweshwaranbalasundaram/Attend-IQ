@@ -1,67 +1,51 @@
-# Attend-IQ Core Database
+# Attend-IQ Database Schema
 
-## Database
+## Database and Tables
 
-Core connects to the MySQL database named `attendiq_java` by default. It uses the existing schema in `src/main/resources/schema.sql`; the optional incremental lookup-index migration is `database/migrations/V2__student_name_search_index.sql`.
+Attend-IQ connects to the MySQL database `attendiq_java` by default. SQL values are supplied through `PreparedStatement` parameters.
 
-## Entity Relationships
+| Table | Purpose |
+| --- | --- |
+| `students` | Student identity and unique registration number |
+| `faculty` | Faculty identity, email, and nullable PBKDF2 password hash |
+| `subjects` | Subject identity and assigned faculty |
+| `enrollments` | Student/subject many-to-many relationship |
+| `class_sessions` | Dated class meetings by subject and period |
+| `attendance_records` | One status per student/session |
+| `attendance_audit_log` | Successful attendance marks, corrections, and deletions |
+| `login_attempts` | Failed-login counter and temporary lock expiry per faculty account |
+| `faculty_auth_audit_log` | Successful, failed, and locked login events; stores no password or hash |
+| `schema_migrations` | Manually applied schema version history |
 
-```mermaid
-erDiagram
-    FACULTY ||--o{ SUBJECTS : teaches
-    STUDENTS ||--o{ ENROLLMENTS : enrolls
-    SUBJECTS ||--o{ ENROLLMENTS : contains
-    SUBJECTS ||--o{ CLASS_SESSIONS : schedules
-    STUDENTS ||--o{ ATTENDANCE_RECORDS : receives
-    CLASS_SESSIONS ||--o{ ATTENDANCE_RECORDS : records
-```
+`faculty_auth_audit_log.attempted_faculty_id` also records unknown IDs, so it intentionally has no foreign key. `login_attempts.faculty_id` references `faculty` and is deleted with the faculty row.
 
-| Table | Main key | Important constraints |
-| --- | --- | --- |
-| `students` | `student_id` | Unique `register_number`; optional unique email |
-| `faculty` | `faculty_id` | Required unique email |
-| `subjects` | `subject_id` | Unique `subject_code`; FK to faculty |
-| `enrollments` | `(student_id, subject_id)` | FKs to students and subjects; duplicate enrollment rejected |
-| `class_sessions` | `session_id` | FK to subject; unique subject/date/period; period 1-12 |
-| `attendance_records` | `attendance_id` | FKs to session and student; unique session/student; enum status |
-| `attendance_audit_log` | `audit_id` | FKs to session/student/claimed faculty; event, old/new status, reason, timestamp |
-| `schema_migrations` | `version` | Tracks manually applied Core migration versions |
+## Attendance Rules
 
-## Data Preservation Rules
+- Unique keys prevent duplicate enrollment, subject/date/period sessions, and attendance per student/session.
+- Foreign keys preserve relationships. History protects attendance, enrollment, and session records from unsafe deletion.
+- Attendance updates/deletes and their audit rows commit in one transaction.
+- Corrections and deletions require a matching faculty password and the existing service check that the faculty member is assigned to the session.
+- Login attempt state is updated transactionally with a password-free authentication audit event. Five consecutive failed attempts lock the account for five minutes; success clears the counter.
 
-- Baseline schema creates seven application tables plus `schema_migrations` using `CREATE TABLE IF NOT EXISTS`; it never drops a table or deletes application rows.
-- Demo rows use `INSERT IGNORE`; they do not overwrite existing rows.
-- Student deletion is refused when an enrollment, attendance record, or audit row references the student.
-- Enrollment removal is refused when attendance or audit history exists for that student and subject.
-- Subject deletion is refused while enrollments or sessions exist.
-- Session update/deletion is refused after attendance is recorded.
-- Faculty deletion is rejected by the subject foreign key while subjects remain assigned.
-- Attendance is removed only by an explicit action from the session's assigned faculty ID.
-- Audit history prevents deletion of referenced sessions, students, faculty, or enrollments.
-- Audit rows are retained after attendance deletion and prevent deletion of referenced sessions, students, or claimed faculty.
-
-## Attendance Report Definition
-
-The report includes sessions on/after enrollment and through the current date. `PRESENT` and `ON_DUTY` are counted as attended; `ABSENT` is counted as absent; a missing record is listed separately as unmarked and counts in the scheduled-session denominator.
-
-`percentage = 100 * (present + on-duty) / scheduled sessions`
-
-No sessions returns 0%, avoiding division by zero. The shortage forecast reports the smallest `x` satisfying `(attended + x) / (scheduled + x) >= target / 100`; a 100% target is impossible after a missed session.
+Attendance percentage is `100 * (PRESENT + ON_DUTY) / scheduled sessions`, counting sessions from enrollment through today. Unmarked sessions count in the denominator. Zero scheduled sessions returns 0%.
 
 ## Fresh Setup
 
-1. In MySQL Workbench, execute `src/main/resources/schema.sql` against the local MySQL server.
-2. Set the Core JDBC URL/user/password environment variables in the terminal that will launch Maven.
-3. Verify the menu's database connection test before managing data.
+1. Execute `src/main/resources/schema.sql` in MySQL Workbench, or start MySQL through `docker compose up -d mysql` as described in [TESTING.md](TESTING.md).
+2. Set the JDBC URL, username, and password in local environment variables.
+3. Verify database connectivity from the application.
+
+The baseline schema includes the latest V1–V5 tables and optional demo rows. It uses `CREATE TABLE IF NOT EXISTS` and `INSERT IGNORE`; it does not drop or reset data.
 
 ## Existing Database Migration
 
-1. Back up the database before manual schema changes.
-2. Confirm V1 baseline tables exist. Running `schema.sql` again is safe for table creation and seed rows, but it is not a general schema-diff engine.
-3. Execute `database/migrations/V2__student_name_search_index.sql`; it creates missing lookup indexes by checking `information_schema` and records the migration.
-4. Execute `database/migrations/V3__attendance_audit_log.sql` to add audit history for attendance changes.
-5. Check `schema_migrations` and retain the backup until the new build is verified.
+Back up the database, then apply missing migrations in order. A V1 database needs V2, V3, V4, and V5:
 
-V3 records successful marks, corrections, and deletions in the same transaction as the attendance change. `claimed_faculty_id` is an entered value, not authenticated identity. Catalog edits and failed/unauthorized attempts are not logged.
+1. `database/migrations/V2__student_name_search_index.sql`
+2. `database/migrations/V3__attendance_audit_log.sql`
+3. `database/migrations/V4__faculty_password_hash.sql`
+4. `database/migrations/V5__faculty_login_lockout_and_audit.sql`
 
-For isolated integration tests, execute `src/test/resources/schema-test.sql` to create the separate `attendiq_java_test` schema. Never point test settings at the normal or production database.
+The application does not run migrations automatically. Apply V5 only after V4 has added `faculty.password_hash`. Existing rows retain a null password hash until a trusted administrator provisions them. New faculty set a password during creation. The initial-password setup menu for an existing null-hash account is disabled unless `ATTENDIQ_ALLOW_INITIAL_PASSWORD_SETUP=true` is set in a trusted setup session.
+
+The authentication audit table stores only the attempted faculty ID, event type, and timestamp. Passwords and password hashes are never written to it.

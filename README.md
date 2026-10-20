@@ -38,7 +38,8 @@ Manual attendance can be slow to reconcile and can result in duplicate marks or 
 | Apache Maven 3.9+ | Dependency management, compilation, tests, packaging, and execution |
 | JDBC / MySQL Connector/J 9.4.0 | Java database connectivity and prepared SQL statements |
 | MySQL 8+ | Persistent relational data, keys, constraints, and attendance history |
-| JUnit 5.11.4 | Unit and opt-in integration tests |
+| JUnit 5.11.4 | Unit and opt-in MySQL integration tests |
+| JaCoCo 0.8.14 | Maven line-coverage reports; CI targets 70% aggregate coverage for service classes |
 | Git and GitHub | Source control and repository verification workflow |
 
 The repository does not publish language-percentage figures; no verified GitHub language breakdown was captured for this README. Technology badges describe the configured stack, not source-code distribution.
@@ -73,9 +74,9 @@ This is an **illustrative terminal mockup**, not a screenshot of a live applicat
 
 ## Project Health and Live Status
 
-The workflow badge at the top reflects the configured GitHub Actions Maven verification workflow. The workflow runs on pushes, pull requests, and manual dispatch; it compiles and tests without connecting to a personal MySQL database. No remote workflow result is claimed here until GitHub records a run.
+The workflow badge at the top reflects the GitHub Actions Maven verification workflow. It runs on pushes, pull requests, and manual dispatch; it starts a disposable MySQL 8.4 service and runs the MySQL integration test against the isolated `attendiq_java_test` database. No remote workflow result is claimed here until GitHub records a run.
 
-Local verification on **2026-10-19**: `mvn clean verify` succeeded with **28 tests passed, 0 failed, and 1 opt-in MySQL integration test skipped**. No hosted service or live-user counter is part of this local console application.
+The last recorded local Maven verification on **2026-10-19** predates the authentication and coverage changes. The current build must be verified with `mvn clean verify`; a CI pass is claimed only after GitHub Actions completes successfully.
 
 ## Architecture
 
@@ -191,15 +192,17 @@ erDiagram
 - Attendance marking and audited corrections/deletions use transactions with rollback on failure.
 - Existing enrollment and attendance history protects records from unsafe deletion. The application does not drop or reset user data.
 - Database credentials come from `ATTENDIQ_DB_URL`, `ATTENDIQ_DB_USER`, and `ATTENDIQ_DB_PASSWORD`; the password is never printed.
-- The faculty ID used to authorize attendance correction/deletion is entered by the console operator. It is an assignment check, **not authenticated identity**.
-- V3 audit records cover successful attendance marks, corrections, and deletions. Catalog edits and failed/unauthorized attempts are not audited.
+- Attendance correction/deletion checks the assigned faculty ID and verifies its salted PBKDF2 password hash. New faculty accounts set a password when created; configured accounts must authenticate before changing it.
+- Five failed logins lock an account for five minutes. Successful, failed, and locked login events are recorded without passwords in `faculty_auth_audit_log`.
+- Attendance events remain in `attendance_audit_log`; catalog edits and failed attendance authorization attempts are not audited.
 
 ## Project Structure
 
 ```text
 java-attendance/
-|-- .github/workflows/verify.yml
-|-- database/migrations/            # V2 search index, V3 attendance audit
+|-- ../.github/workflows/verify.yml
+|-- database/migrations/            # V2 search index through V5 login security
+|-- docker-compose.yml              # MySQL only; initializes the schema on first start
 |-- docs/                           # architecture, schema, user and project guides
 |   `-- assets/                     # repository-owned SVG banner and preview
 |-- src/main/java/com/attendiq/     # console, services, domain, JDBC repositories
@@ -216,6 +219,7 @@ java-attendance/
 - Apache Maven 3.9 or newer
 - MySQL 8 or newer
 - MySQL Workbench (optional; used in the examples to run SQL scripts)
+- Docker Compose (optional; starts only MySQL and initializes the schema)
 
 ## Install and Configure (Windows PowerShell)
 
@@ -223,7 +227,7 @@ java-attendance/
 
 For a fresh local database, open `src/main/resources/schema.sql` in MySQL Workbench and execute it. The script creates `attendiq_java`, the application tables, migration tracking, and optional demo rows. It uses `CREATE TABLE IF NOT EXISTS` and `INSERT IGNORE`; it does not drop tables or reset existing rows.
 
-For an existing V1 database, back it up and apply `database/migrations/V2__student_name_search_index.sql`, then `database/migrations/V3__attendance_audit_log.sql`. The System menu never performs migrations automatically.
+For an existing V1 database, back it up and apply V2, V3, V4, and V5 in order from `database/migrations/`. The System menu never performs migrations automatically.
 
 ### 2. Set Java, Maven, and database configuration
 
@@ -243,6 +247,10 @@ $env:ATTENDIQ_COLOR = 'always' # use 'never' for plain output; omit for auto-det
 
 The URL option `allowPublicKeyRetrieval=true` is included for local development with non-TLS MySQL authentication. Prefer TLS with certificate verification for remote or production database connections. If the local MySQL account has no password, set the password variable to an empty string. These environment variables apply only to the current PowerShell session.
 
+To start only the local MySQL service instead of installing MySQL directly, set a local password with `$env:ATTENDIQ_DB_PASSWORD = Read-Host 'Local MySQL password'`, then run `docker compose up -d mysql`. The schema is loaded only when the named data volume is first initialized. `docker compose down` stops MySQL; `docker compose down -v` also deletes its data volume.
+
+New faculty set an initial password from Faculty Management. A trusted administrator can initialize a legacy/null-hash faculty account from the Set/change faculty password menu by setting `ATTENDIQ_ALLOW_INITIAL_PASSWORD_SETUP=true` for that setup session, then removing it afterward. Accounts with a configured password must authenticate with the current password before changing it.
+
 ## Build, Test, and Run
 
 ```powershell
@@ -250,7 +258,7 @@ mvn clean verify
 mvn exec:java
 ```
 
-`mvn clean verify` compiles production and test sources and runs the default suite. `mvn exec:java` starts `com.attendiq.App`. The opt-in MySQL integration test is skipped unless separately configured; details are in [TESTING.md](docs/TESTING.md).
+`mvn clean verify` compiles production and test sources, runs unit tests, and writes a JaCoCo report. `mvn exec:java` starts `com.attendiq.App`. MySQL integration tests are opt-in locally and run in GitHub Actions; details are in [TESTING.md](docs/TESTING.md).
 
 ## Main Menu and Usage
 
@@ -285,9 +293,9 @@ Dashboard totals are queried from MySQL. Today's rate uses attended marks divide
 
 ## Automated Testing
 
-Unit tests cover service validation, attendance calculations, console input and rendering, CSV escaping/overwrite behavior, and bulk-result handling. `AttendanceMySqlIntegrationTest` exercises actual persistence and is opt-in. It requires a dedicated `attendiq_java_test` database created from `src/test/resources/schema-test.sql`; never point it at a personal or production database.
+Unit tests cover service validation, attendance calculations, console input/rendering, CSV escaping, bulk-result handling, password hashing, and fake-clock login lockout. MySQL integration tests cover persistence, faculty authentication, lockout persistence, and password-free auth auditing in a dedicated `attendiq_java_test` database created from `src/test/resources/schema-test.sql`. Never point them at a personal or production database.
 
-Default verification result on **2026-10-19**: 28 passed, 0 failed, 1 skipped (the opt-in MySQL integration test). Run `mvn clean verify` to reproduce the safe default suite. See [TESTING.md](docs/TESTING.md) for integration setup and limitations.
+The last local verification recorded on **2026-10-19** predates the faculty authentication and CI changes. Run `mvn clean verify` to reproduce the unit suite; GitHub Actions also runs the integration test against MySQL 8.4. See [TESTING.md](docs/TESTING.md) for details.
 
 ## Documentation
 
@@ -301,9 +309,9 @@ Default verification result on **2026-10-19**: 28 passed, 0 failed, 1 skipped (t
 
 ## Known Limitations
 
-- Faculty assignment checks are not authentication; there is no login or role session.
-- Audit history covers attendance events, not catalog edits or failed/unauthorized attempts.
-- MySQL integration tests need a separately configured `_test` database and are not part of the default verification run.
+- Faculty password setup for legacy accounts requires a trusted setup session; this is a local console login, not a centralized identity service.
+- Attendance audit history does not cover catalog edits or failed attendance-authorization attempts.
+- Local MySQL integration tests need a separately configured `_test` database; GitHub Actions provisions one automatically.
 - The application is a local console program; it has no hosted service, web API, frontend, or online attendance dashboard.
 - There is no automatic schema migration runner; migrations must be applied manually after backing up the database.
 

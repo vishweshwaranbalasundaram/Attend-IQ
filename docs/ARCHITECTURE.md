@@ -82,7 +82,7 @@ Bulk marking previews a roster and confirmed statuses, then invokes `AttendanceS
 
 ## Audit and Export
 
-V3 stores successful `MARKED`, `CORRECTED`, and `DELETED` attendance events atomically with attendance writes. The claimed faculty ID is not authenticated. Catalog CRUD and failed/unauthorized attempts are not logged. CSV export uses the current database-backed service results and protects existing files unless overwrite is explicitly confirmed.
+V3 stores successful `MARKED`, `CORRECTED`, and `DELETED` attendance events atomically with attendance writes. Correction and deletion require the assigned faculty ID and a password verified against its salted PBKDF2 hash. V5 tracks failed logins, locks after five failures for five minutes, and writes password-free success/failure/lockout events to a separate authentication audit table. Catalog CRUD and failed attendance authorization attempts are not logged. CSV export uses the current database-backed service results and protects existing files unless overwrite is explicitly confirmed.
 
 ## Object-Oriented Concepts
 
@@ -94,4 +94,4 @@ V3 stores successful `MARKED`, `CORRECTED`, and `DELETED` attendance events atom
 
 ## Authorization Boundary
 
-Attendance correction/deletion compares an entered faculty ID with the faculty assigned to the session and locks the session during the change. This is a classroom demonstration of authorization logic only. There is no login or authenticated actor identity, so it is not production-grade access control.
+Attendance correction/deletion verifies the faculty password and then compares that faculty ID with the faculty assigned to the session, while locking the session during the change. New faculty accounts receive a password during creation. Password changes require the current password; initial setup of legacy null-hash accounts is gated by `ATTENDIQ_ALLOW_INITIAL_PASSWORD_SETUP=true` for a trusted setup session. This remains a small console application's local login, not a production identity system.

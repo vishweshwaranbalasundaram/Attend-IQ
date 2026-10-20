@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS students (
 CREATE TABLE IF NOT EXISTS faculty (
     faculty_id BIGINT PRIMARY KEY AUTO_INCREMENT,
     full_name VARCHAR(120) NOT NULL,
-    email VARCHAR(160) NOT NULL UNIQUE
+    email VARCHAR(160) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NULL
 );
 
 CREATE TABLE IF NOT EXISTS subjects (
@@ -79,5 +80,28 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
     applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT IGNORE INTO schema_migrations (version, description)
-VALUES ('V1', 'AttendIQ Core test schema');
+CREATE TABLE IF NOT EXISTS login_attempts (
+    faculty_id BIGINT PRIMARY KEY,
+    failed_attempts INT NOT NULL DEFAULT 0,
+    locked_until TIMESTAMP NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_test_login_attempt_faculty FOREIGN KEY (faculty_id)
+        REFERENCES faculty(faculty_id) ON DELETE CASCADE,
+    CONSTRAINT chk_test_login_failed_attempts CHECK (failed_attempts >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS faculty_auth_audit_log (
+    audit_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    attempted_faculty_id BIGINT NOT NULL,
+    event_type ENUM('LOGIN_SUCCESS', 'LOGIN_FAILURE', 'LOGIN_LOCKED') NOT NULL,
+    recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_test_faculty_auth_audit_attempted (attempted_faculty_id, recorded_at),
+    INDEX idx_test_faculty_auth_audit_recorded_at (recorded_at)
+);
+
+INSERT IGNORE INTO schema_migrations (version, description) VALUES
+    ('V1', 'AttendIQ Core test schema'),
+    ('V2', 'Student name search index'),
+    ('V3', 'Attendance audit log'),
+    ('V4', 'Faculty password hash'),
+    ('V5', 'Faculty login lockout and authentication audit');

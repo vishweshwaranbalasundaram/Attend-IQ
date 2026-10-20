@@ -1,0 +1,19 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: attendiq_java
+      MYSQL_ROOT_PASSWORD: ${ATTENDIQ_DB_PASSWORD:?Set ATTENDIQ_DB_PASSWORD before starting MySQL}
+    ports:
+      - "3306:3306"
+    volumes:
+      - attendiq_mysql_data:/var/lib/mysql
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-attendiq-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -p\"$${MYSQL_ROOT_PASSWORD}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  attendiq_mysql_data:

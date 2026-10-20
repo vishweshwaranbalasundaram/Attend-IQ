@@ -1,6 +1,6 @@
 # Attend-IQ User Guide
 
-Attend-IQ is a Java console program backed by MySQL. It has no web interface, login, or authenticated faculty identity.
+Attend-IQ is a Java console program backed by MySQL. It uses a local faculty password login for attendance corrections and deletions.
 
 ## Start the application
 
@@ -11,7 +11,7 @@ mvn clean verify
 mvn exec:java
 ```
 
-For a new local database, execute `src/main/resources/schema.sql` in MySQL Workbench. For an existing V1 database, back it up and apply V2 then V3 from `database/migrations/`. The application does not automatically create or migrate a database.
+For a new local database, execute `src/main/resources/schema.sql` in MySQL Workbench or use `docker compose up -d mysql`. For an existing V1 database, back it up and apply V2 through V5 in order from `database/migrations/`. The application does not automatically migrate an existing database.
 
 ## Navigate menus
 
@@ -22,7 +22,7 @@ The dashboard queries current database totals, today's scheduled sessions and en
 ## Manage academic records
 
 - **Students:** list, add, update, delete, view by ID, and search by name or registration-number prefix. Deletion is protected when enrollment or attendance history exists.
-- **Faculty:** list, add, update, delete, view, and inspect assigned subjects. MySQL prevents removal while subjects or retained audit history reference a faculty member.
+- **Faculty:** list, add with an initial password, update, delete, view, inspect assigned subjects, and set/change passwords. Configured accounts must authenticate before changing passwords. Initial setup for a legacy null-hash account requires a trusted session with `ATTENDIQ_ALLOW_INITIAL_PASSWORD_SETUP=true`.
 - **Subjects:** list, add, update, delete, and view. Subjects require an existing faculty member; related enrollments and sessions protect deletion.
 - **Enrollments:** add or remove a student/subject relationship, list all relationships, or inspect subjects for a student and students in a subject. Attendance history protects the relationship from removal.
 - **Class sessions:** create, list, view, update, delete, or filter by subject and date range. Sessions with attendance history cannot be changed or deleted.
@@ -35,7 +35,7 @@ For a single mark, select a session, choose a student from the enrolled roster, 
 
 Bulk marking displays the enrolled roster and existing records, asks for a status for each unmarked student, previews the proposal, then requests confirmation. Existing records are skipped. Each accepted row commits independently, so partial successes and failures are reported accurately.
 
-To correct or delete a mark, provide the faculty ID assigned to the subject, a reason, and confirmation. This is an assignment check only; it does not prove who is using the console. Successful attendance changes and their audit rows commit together.
+To correct or delete a mark, provide the faculty ID assigned to the subject, its password, a reason, and confirmation. Password input is hidden when the app runs in a real terminal. Five failed logins lock the account for five minutes. Successful attendance changes and their audit rows commit together.
 
 ## Reports and attendance policy
 

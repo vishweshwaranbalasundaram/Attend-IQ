@@ -16,7 +16,7 @@
 6. Retrieve the saved record and explain the transaction and unique constraint.
 7. Open reports and explain Present + On-duty plus unmarked sessions in the denominator.
 8. Export a report and demonstrate that an existing CSV requires confirmation before overwrite.
-9. Correct attendance with a reason and inspect the audit history. Explain that the claimed faculty ID is not authenticated.
+9. Create a faculty account with a password, assign it to the subject, then correct attendance with that faculty ID/password and a reason. Inspect attendance history and the separate faculty-auth audit table; seeded accounts start without a password and need trusted initial setup.
 10. Demonstrate bulk marking using a fresh session; explain per-row commits and partial results.
 11. Exit with main-menu option `0` (`12` remains accepted for compatibility).
 

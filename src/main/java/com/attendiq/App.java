@@ -21,6 +21,7 @@ public class App {
             new StudentService(new JdbcAcademicRepository());
     private static final AcademicCatalogService CATALOG =
             new AcademicCatalogService(new JdbcAcademicCatalogRepository());
+    private static final FacultyAuthService FACULTY_AUTH = new FacultyAuthService();
     private static final ConsoleStyle STYLE = new ConsoleStyle();
     private static final ConsoleUI UI = new ConsoleUI(STYLE);
     private static final DashboardRepository DASHBOARD = new DashboardRepository();
@@ -378,7 +379,7 @@ public class App {
                 "Enter the number shown to open a menu option.",
                 "Enter 0 in a submenu to return to the main menu.",
                 "Enter 0 in the main menu to exit (12 is also accepted).",
-                "Attendance correction uses the assigned faculty ID as an academic check only.",
+                "Attendance correction and deletion require the assigned faculty ID and password.",
                 "Set ATTENDIQ_COLOR=never for plain text or ATTENDIQ_COLOR=always to force ANSI colors.",
                 "MySQL integration tests require the separate attendiq_java_test database."));
     }
@@ -423,20 +424,81 @@ public class App {
         }
 
     private static void manageFaculty() throws SQLException {
-        UI.menu("FACULTY MANAGEMENT", List.of("List faculty", "Add faculty", "Update faculty",
-            "Delete faculty", "View faculty", "Assigned subjects"));
+        UI.menu("FACULTY MANAGEMENT", List.of("List faculty", "Add faculty with password",
+            "Update faculty", "Delete faculty", "View faculty", "Assigned subjects",
+            "Set/change faculty password"));
         switch (readInt("Faculty action: ")) {
             case 1 -> showFaculty(CATALOG.listFaculty());
-            case 2 -> showFaculty(List.of(CATALOG.createFaculty(
-                readText("Full name: "), readText("Email: "))));
+            case 2 -> createFaculty();
             case 3 -> showFaculty(List.of(CATALOG.updateFaculty(readLong("Faculty ID: "),
                 readText("Full name: "), readText("Email: "))));
             case 4 -> UI.info(CATALOG.deleteFaculty(readLong("Faculty ID: "))
                 ? "Faculty deleted." : "Faculty not found.");
             case 5 -> showFaculty(List.of(CATALOG.findFaculty(readLong("Faculty ID: "))));
             case 6 -> showSubjects(CATALOG.subjectsForFaculty(readLong("Faculty ID: ")));
+            case 7 -> setOrChangeFacultyPassword();
             case 0 -> { }
             default -> UI.warning("Choose a faculty action from the list.");
+        }
+    }
+
+    private static void createFaculty() throws SQLException {
+        char[] password = INPUT.readPassword("Initial password (at least 8 characters): ");
+        try {
+            char[] confirmation = INPUT.readPassword("Confirm password: ");
+            try {
+                if (!java.util.Arrays.equals(password, confirmation)) {
+                    throw new IllegalArgumentException("Passwords do not match.");
+                }
+                Faculty faculty = CATALOG.createFaculty(readText("Full name: "), readText("Email: "));
+                FACULTY_AUTH.setPassword(faculty.facultyId(), password);
+                UI.success("Faculty created and password configured.");
+                showFaculty(List.of(faculty));
+            } finally {
+                PasswordHasher.wipe(confirmation);
+            }
+        } finally {
+            PasswordHasher.wipe(password);
+        }
+    }
+
+    private static void setOrChangeFacultyPassword() throws SQLException {
+        long facultyId = readLong("Faculty ID: ");
+        if (FACULTY_AUTH.hasPassword(facultyId)) {
+            char[] currentPassword = INPUT.readPassword("Current password: ");
+            boolean authenticated;
+            try {
+                authenticated = FACULTY_AUTH.authenticate(facultyId, currentPassword);
+            } finally {
+                PasswordHasher.wipe(currentPassword);
+            }
+            if (!authenticated) {
+                UI.error("Password change was not authorized.");
+                return;
+            }
+        } else {
+            if (!"true".equalsIgnoreCase(System.getenv("ATTENDIQ_ALLOW_INITIAL_PASSWORD_SETUP"))) {
+                UI.warning("This account has no password. Ask an administrator to provision it, or "
+                        + "enable ATTENDIQ_ALLOW_INITIAL_PASSWORD_SETUP for a trusted setup session.");
+                return;
+            }
+            UI.info("Initial password setup is enabled for this trusted administrator session.");
+        }
+
+        char[] newPassword = INPUT.readPassword("New password (at least 8 characters): ");
+        try {
+            char[] confirmation = INPUT.readPassword("Confirm new password: ");
+            try {
+                if (!java.util.Arrays.equals(newPassword, confirmation)) {
+                    throw new IllegalArgumentException("Passwords do not match.");
+                }
+                FACULTY_AUTH.setPassword(facultyId, newPassword);
+                UI.success("Faculty password updated.");
+            } finally {
+                PasswordHasher.wipe(confirmation);
+            }
+        } finally {
+            PasswordHasher.wipe(newPassword);
         }
     }
 
@@ -563,7 +625,17 @@ public class App {
             return;
         }
         long facultyId = readLong("Assigned faculty ID: ");
-        UI.info("The faculty ID is an assignment check only; this console does not authenticate identity.");
+        char[] password = INPUT.readPassword("Faculty password: ");
+        boolean authenticated;
+        try {
+            authenticated = FACULTY_AUTH.authenticate(facultyId, password);
+        } finally {
+            PasswordHasher.wipe(password);
+        }
+        if (!authenticated) {
+            UI.error("Faculty login failed. Check the ID and password, or ask an administrator to configure the account.");
+            return;
+        }
         switch (action) {
             case 1 -> {
                 System.out.println("1. PRESENT  2. ABSENT  3. ON_DUTY");
@@ -628,7 +700,7 @@ public class App {
             event.recordedAt().toString())).toList();
         ConsoleTable.printPaged(List.of("Audit", "Student", "Event", "From", "To", "Reason",
             "Claimed faculty ID", "Recorded at"), rows, INPUT, STYLE);
-        UI.warning("Claimed faculty ID is not an authenticated identity.");
+        UI.info("Correction/deletion events are authenticated; older audit rows may predate faculty passwords.");
         }
 
     private static void markAttendance() throws SQLException {

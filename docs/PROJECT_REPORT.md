@@ -15,7 +15,7 @@ Manual attendance workflows can be slow to reconcile, allow duplicate entries, a
 
 ## Scope
 
-The Java 25 console application implements student, faculty, subject, enrollment, and class-session management; attendance create/read/update/delete; bulk marking; attendance history; dashboard aggregates; percentage/shortage reports; CSV exports; and a colored, paginated terminal interface. It has no login, GUI, web API, or authenticated faculty identity. The faculty ID used for correction is supplied by the console operator and is only an academic authorization demonstration.
+The Java 25 console application implements student, faculty, subject, enrollment, and class-session management; attendance create/read/update/delete; bulk marking; attendance history; dashboard aggregates; percentage/shortage reports; CSV exports; and a colored, paginated terminal interface. It has a local faculty password login for corrections and deletions, and no GUI or web API.
 
 ## Functional Requirements
 
@@ -33,9 +33,10 @@ The Java 25 console application implements student, faculty, subject, enrollment
 - Multi-step attendance and protected delete operations use transactions and rollback.
 - Database constraints remain authoritative for uniqueness and references.
 - Configuration uses environment variables; no passwords are committed.
-- The baseline schema and V2/V3 migrations do not drop application data.
+- The baseline schema and V2/V3/V4/V5 migrations do not drop application data.
 - V3 audit inserts share transactions with successful attendance changes; catalog edits and failed attempts are not audited.
-- V3 audit inserts share attendance write transactions; only successful attendance changes are audited.
+- V3 audit inserts share attendance write transactions; successful attendance changes are audited.
+- V5 locks a faculty account for five minutes after five failed logins and records password-free authentication audit events.
 
 ## OOP / DBMS Demonstration
 
@@ -49,13 +50,13 @@ The normalized MySQL schema uses generated primary keys, foreign keys, unique st
 
 ## Test Status
 
-On 2026-10-19, `mvn clean verify` succeeded: 28 tests passed, with 0 failures, 0 errors, and 1 skipped opt-in MySQL integration test. The integration test requires a separately configured `attendiq_java_test` database and was not run.
+On 2026-10-19, the earlier `mvn clean verify` run had 28 tests pass and one opt-in MySQL test skip. The updated GitHub Actions workflow provisions MySQL 8.4 and runs the integration test against `attendiq_java_test`; the updated suite has not yet been run locally.
 
 ## Limitations and Future Work
 
-- Faculty ID checks are not authentication and must not be treated as production access control.
+- Faculty passwords gate correction/deletion, but the local console login is not a production identity system.
 - MySQL integration coverage is available but requires a dedicated test schema and credentials.
 - Attendance records do not include late status in Core; the schema enum is intentionally unchanged.
 - No login, student portal, graphical UI, or deployment setup is included in this console-only edition.
-- Audit history does not cover catalog CRUD or failed/unauthorized attempts; claimed faculty IDs are not authenticated actors.
+- Audit history does not cover catalog CRUD or failed attendance-authorization attempts; login failures are recorded separately.
 - A true authentication/authorization layer would be required before exposing this to real users.
