@@ -41,6 +41,6 @@ public final class CsvExporter {
             writer.write(value.replace("\"", "\"\""));
             writer.write('"');
         }
-        writer.newLine();
+        writer.write("\r\n");
     }
 }
