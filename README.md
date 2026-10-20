@@ -81,19 +81,19 @@ mvn exec:java
 
 | Module | What you can do |
 | :-- | :-- |
-| `[ST]` **Students** | Create, list, view, update, delete (when history permits), search by name or register-number prefix |
-| `[FC]` **Faculty** | Create, list, view, update, delete (subject to foreign keys), list assigned subjects |
-| `[SB]` **Subjects** | Create, list, view, update, delete when enrollment/session history permits |
-| `[EN]` **Enrollments** | Enroll or remove students, list by student or subject |
-| `[CS]` **Class sessions** | Create, list, view, update/delete before attendance exists, filter by subject/date range |
-| `[AT]` **Attendance** | Mark `PRESENT`, `ABSENT` or `ON_DUTY`; view by session, student or subject/date range |
-| `[BA]` **Bulk attendance** | Preview roster and proposed marks, skip existing rows, per-row results |
-| `[ED]` **Corrections** | Correct or delete with a reason and assigned-faculty check; audit event kept |
-| `[RP]` **Reports** | Student/subject percentage, subject summaries, shortage forecast, history filters |
-| `[DB]` **Dashboard** | Totals from MySQL, today's roster status, below-target count, recent audit activity |
-| `[CSV]` **CSV export** | Students, filtered attendance, subject summaries, shortage reports (overwrite confirmation) |
-| `[SYS]` **Diagnostics** | Test the JDBC connection and view Java/database info without showing credentials |
-| `[UI]` **Console UI** | ANSI colors (with no-color option), panels, pagination, progress bars |
+| ![ST](https://img.shields.io/badge/ST-Students-0891b2?style=flat-square) **Students** | Create, list, view, update, delete (when history permits), search by name or register-number prefix |
+| ![FC](https://img.shields.io/badge/FC-Faculty-7c3aed?style=flat-square) **Faculty** | Create, list, view, update, delete (subject to foreign keys), list assigned subjects |
+| ![SB](https://img.shields.io/badge/SB-Subjects-2563eb?style=flat-square) **Subjects** | Create, list, view, update, delete when enrollment/session history permits |
+| ![EN](https://img.shields.io/badge/EN-Enrollments-db2777?style=flat-square) **Enrollments** | Enroll or remove students, list by student or subject |
+| ![CS](https://img.shields.io/badge/CS-Class_sessions-4f46e5?style=flat-square) **Class sessions** | Create, list, view, update/delete before attendance exists, filter by subject/date range |
+| ![AT](https://img.shields.io/badge/AT-Attendance-059669?style=flat-square) **Attendance** | Mark `PRESENT`, `ABSENT` or `ON_DUTY`; view by session, student or subject/date range |
+| ![BA](https://img.shields.io/badge/BA-Bulk_attendance-d97706?style=flat-square) **Bulk attendance** | Preview roster and proposed marks, skip existing rows, per-row results |
+| ![ED](https://img.shields.io/badge/ED-Corrections-ea580c?style=flat-square) **Corrections** | Correct or delete with a reason and assigned-faculty check; audit event kept |
+| ![RP](https://img.shields.io/badge/RP-Reports-9333ea?style=flat-square) **Reports** | Student/subject percentage, subject summaries, shortage forecast, history filters |
+| ![DB](https://img.shields.io/badge/DB-Dashboard-0e7490?style=flat-square) **Dashboard** | Totals from MySQL, today's roster status, below-target count, recent audit activity |
+| ![CSV](https://img.shields.io/badge/CSV-CSV_export-0f766e?style=flat-square) **CSV export** | Students, filtered attendance, subject summaries, shortage reports (overwrite confirmation) |
+| ![SYS](https://img.shields.io/badge/SYS-Diagnostics-475569?style=flat-square) **Diagnostics** | Test the JDBC connection and view Java/database info without showing credentials |
+| ![UI](https://img.shields.io/badge/UI-Console_UI-be123c?style=flat-square) **Console UI** | ANSI colors (with no-color option), panels, pagination, progress bars |
 
 ### Console Preview
 
@@ -454,12 +454,12 @@ mvn exec:java        # start com.attendiq.App
 
 | Key | Module | Key | Module |
 | :-: | :-- | :-: | :-- |
-| `1` | `[DB]` Dashboard and quick actions | `7` | `[AT]` Attendance (bulk marking, correction) |
-| `2` | `[ST]` Student Management | `8` | `[RP]` Reports & Analytics |
-| `3` | `[FC]` Faculty Management | `9` | `[CSV]` CSV exports |
-| `4` | `[SB]` Subject Management | `10` | `[SYS]` System & Database diagnostics |
-| `5` | `[EN]` Enrollment Management | `11` | `[?]` Help & Shortcuts |
-| `6` | `[CS]` Class Session Management | `0` | `[X]` Exit (`12` also accepted) |
+| `1` | ![DB](https://img.shields.io/badge/DB-0e7490?style=flat-square) Dashboard and quick actions | `7` | ![AT](https://img.shields.io/badge/AT-059669?style=flat-square) Attendance (bulk marking, correction) |
+| `2` | ![ST](https://img.shields.io/badge/ST-0891b2?style=flat-square) Student Management | `8` | ![RP](https://img.shields.io/badge/RP-9333ea?style=flat-square) Reports & Analytics |
+| `3` | ![FC](https://img.shields.io/badge/FC-7c3aed?style=flat-square) Faculty Management | `9` | ![CSV](https://img.shields.io/badge/CSV-0f766e?style=flat-square) CSV exports |
+| `4` | ![SB](https://img.shields.io/badge/SB-2563eb?style=flat-square) Subject Management | `10` | ![SYS](https://img.shields.io/badge/SYS-475569?style=flat-square) System & Database diagnostics |
+| `5` | ![EN](https://img.shields.io/badge/EN-db2777?style=flat-square) Enrollment Management | `11` | ![HELP](https://img.shields.io/badge/HELP-Shortcuts-334155?style=flat-square) Help & Shortcuts |
+| `6` | ![CS](https://img.shields.io/badge/CS-4f46e5?style=flat-square) Class Session Management | `0` | ![EXIT](https://img.shields.io/badge/EXIT-b91c1c?style=flat-square) Exit (`12` also accepted) |
 
 Submenus use `0` to go back. Tables show 12 rows per page: press Enter for the next page or `q` to stop.
 
