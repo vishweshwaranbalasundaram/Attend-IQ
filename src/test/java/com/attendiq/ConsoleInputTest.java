@@ -1,6 +1,7 @@
 package com.attendiq;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.ByteArrayInputStream;
@@ -56,6 +57,13 @@ class ConsoleInputTest {
 
         assertEquals("Console input is closed.", assertThrows(ConsoleInputClosedException.class,
                 () -> input.readText("")).getMessage());
+    }
+
+    @Test
+    void passwordFallbackPreservesWhitespaceForNonConsoleInput() {
+        ConsoleInput input = input(" secret with spaces \n");
+
+        assertArrayEquals(" secret with spaces ".toCharArray(), input.readPassword(""));
     }
 
     private ConsoleInput input(String text) {

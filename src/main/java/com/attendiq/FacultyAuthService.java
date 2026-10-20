@@ -62,10 +62,7 @@ public final class FacultyAuthService {
         }
     }
 
-    /**
-     * Checks credentials and records every attempt. Five failures lock the account for five minutes.
-     * Unknown and non-positive IDs are audited but do not create lockout rows.
-     */
+    /** Checks credentials and records every attempt without persisting a password. */
     public boolean authenticate(long facultyId, char[] password) throws SQLException {
         try (Connection connection = Database.getConnection()) {
             connection.setAutoCommit(false);
@@ -86,7 +83,8 @@ public final class FacultyAuthService {
                 }
 
                 if (PasswordHasher.verify(password, hash)) {
-                    saveAttemptState(connection, facultyId, new LoginAttemptPolicy.AttemptState(0, null));
+                    saveAttemptState(connection, facultyId,
+                            new LoginAttemptPolicy.AttemptState(0, null));
                     logAttempt(connection, facultyId, "LOGIN_SUCCESS");
                     connection.commit();
                     return true;

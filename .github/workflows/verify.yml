@@ -11,6 +11,18 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pci_root_password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=15
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -20,5 +32,12 @@ jobs:
           distribution: temurin
           java-version: '25'
           cache: maven
-      - name: Build and run safe test suite
+      - name: Create dedicated _test database
+        run: mysql -h 127.0.0.1 -uroot -pci_root_password < src/test/resources/schema-test.sql
+      - name: Build, run unit tests and MySQL integration test
+        env:
+          ATTENDIQ_RUN_MYSQL_IT: 'true'
+          ATTENDIQ_DB_URL: jdbc:mysql://127.0.0.1:3306/attendiq_java_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+          ATTENDIQ_DB_USER: root
+          ATTENDIQ_DB_PASSWORD: ci_root_password
         run: mvn --batch-mode --no-transfer-progress clean verify

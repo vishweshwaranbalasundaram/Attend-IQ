@@ -5,7 +5,7 @@ services:
       MYSQL_DATABASE: attendiq_java
       MYSQL_ROOT_PASSWORD: ${ATTENDIQ_DB_PASSWORD:?Set ATTENDIQ_DB_PASSWORD before starting MySQL}
     ports:
-      - "3306:3306"
+      - "${ATTENDIQ_MYSQL_PORT:-3306}:3306"
     volumes:
       - attendiq_mysql_data:/var/lib/mysql
       - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-attendiq-schema.sql:ro

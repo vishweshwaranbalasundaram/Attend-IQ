@@ -38,7 +38,11 @@ public final class ConsoleInput {
             }
             return password;
         }
-        return readText(prompt).toCharArray();
+        System.out.print(prompt);
+        if (!scanner.hasNextLine()) {
+            throw new ConsoleInputClosedException();
+        }
+        return scanner.nextLine().toCharArray();
     }
 
     public long readLong(String prompt) {

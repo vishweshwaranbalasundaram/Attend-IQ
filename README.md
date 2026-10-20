@@ -1,142 +1,287 @@
-# Attend-IQ
+<div align="center">
+
+<img src="docs/assets/attendiq-banner.svg" alt="Attend-IQ: Smart Attendance Management System" width="900">
+
+# 🎓 Attend-IQ
+
+### Smart Attendance Management System: Java · JDBC · MySQL
+
+*A database-backed console application with colored terminal navigation, attendance reports, audit history and CSV export.*
+
+<br>
+
+<img src="https://img.shields.io/badge/Language-Java_25-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 25">
+<img src="https://img.shields.io/badge/Database-MySQL_8+-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL 8+">
+<img src="https://img.shields.io/badge/Connectivity-JDBC-007396?style=for-the-badge&logo=java&logoColor=white" alt="JDBC">
+<img src="https://img.shields.io/badge/Build-Maven_3.9+-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white" alt="Maven">
+
+<img src="https://img.shields.io/badge/Tests-JUnit_5-25A162?style=for-the-badge&logo=junit5&logoColor=white" alt="JUnit 5">
+<img src="https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" alt="GitHub Actions">
+<img src="https://img.shields.io/badge/VCS-Git-F05032?style=for-the-badge&logo=git&logoColor=white" alt="Git">
+<img src="https://img.shields.io/badge/UI-Console_(ANSI)-111827?style=for-the-badge&logo=gnometerminal&logoColor=white" alt="Console UI">
+
+<br><br>
+
+<a href="https://github.com/vishweshwaranbalasundaram/Attend-IQ/actions/workflows/verify.yml"><img src="https://github.com/vishweshwaranbalasundaram/Attend-IQ/actions/workflows/verify.yml/badge.svg" alt="Maven verification"></a>
+
+</div>
+
+---
+
+## 🧭 Quick Navigation
+
+| 🚀 Start | 🏗️ Understand | 📚 Learn | 🛠️ Work on it |
+| :-- | :-- | :-- | :-- |
+| [Quick Start](#-quick-start) | [Architecture](#-architecture) | [User guide](docs/USER_GUIDE.md) | [Testing](#-testing--ci) |
+| [Features](#-features) | [Workflows](#-workflows) | [Project report](docs/PROJECT_REPORT.md) | [Roadmap](#-roadmap) |
+| [Main menu](#-main-menu) | [Database ER](#-database-er-diagram) | [Viva questions](docs/VIVA_QUESTIONS.md) | [Contributing](#-contributing) |
+| [Full setup](#-full-setup) | [Attendance policy](#-attendance-calculation-policy) | [Demo script](docs/DEMO_SCRIPT.md) | [Limitations](#-known-limitations) |
+
+---
+
+## 💡 Why Attend-IQ?
+
+Manual attendance is slow to reconcile and easy to get wrong: duplicate marks, marks for students who are not enrolled, and no history of corrections. Attend-IQ models the whole workflow in a relational database and **validates the class session and enrollment before saving anything**.
+
+| 🎯 Goal | ✅ How it is done |
+| :-- | :-- |
+| No duplicate attendance | `UNIQUE (session_id, student_id)` in MySQL, also under concurrent attempts |
+| Only enrolled students | Service checks enrollment inside a transaction |
+| Traceable corrections | Audit log for marks, corrections and deletions |
+| Know who is at risk | Percentage, shortage forecast and below-target dashboard |
+| Easy sharing | CSV export for students, attendance, summaries and shortage reports |
+
+---
+
+## ⚡ Quick Start
+
+```bash
+# 1) Clone
+git clone https://github.com/vishweshwaranbalasundaram/Attend-IQ.git
+cd Attend-IQ
+
+# 2) Create the database (run in MySQL Workbench or the mysql client)
+mysql -u root -p < src/main/resources/schema.sql
+
+# 3) Configure (Linux/macOS shell; Windows PowerShell version is in Full Setup)
+export ATTENDIQ_DB_URL='jdbc:mysql://localhost:3306/attendiq_java?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC'
+export ATTENDIQ_DB_USER='root'
+export ATTENDIQ_DB_PASSWORD='YOUR_MYSQL_PASSWORD'
+
+# 4) Test and run
+mvn clean verify
+mvn exec:java
+```
+
+> 🔐 Never commit your database password. It is read from environment variables only and is never printed.
+
+---
+
+## ✨ Features
+
+| 🧩 Module | 📌 What you can do |
+| :-- | :-- |
+| 👩‍🎓 **Students** | Create, list, view, update, delete (when history permits), search by name or register-number prefix |
+| 👨‍🏫 **Faculty** | Create, list, view, update, delete (subject to foreign keys), list assigned subjects |
+| 📘 **Subjects** | Create, list, view, update, delete when enrollment/session history permits |
+| 🔗 **Enrollments** | Enroll or remove students, list by student or subject |
+| 🗓️ **Class sessions** | Create, list, view, update/delete before attendance exists, filter by subject/date range |
+| ✅ **Attendance** | Mark `PRESENT`, `ABSENT` or `ON_DUTY`; view by session, student or subject/date range |
+| 📦 **Bulk attendance** | Preview roster and proposed marks, skip existing rows, per-row results |
+| ✏️ **Corrections** | Correct or delete with a reason and assigned-faculty check; audit event kept |
+| 📊 **Reports** | Student/subject percentage, subject summaries, shortage forecast, history filters |
+| 🖥️ **Dashboard** | Totals from MySQL, today's roster status, below-target count, recent audit activity |
+| 📤 **CSV export** | Students, filtered attendance, subject summaries, shortage reports (overwrite confirmation) |
+| 🩺 **Diagnostics** | Test the JDBC connection and view Java/database info without showing credentials |
+| 🎨 **Console UI** | ANSI colors (with no-color option), panels, pagination, progress bars |
+
+### 🖼️ Console Preview
+
+> Illustrative terminal mockup with placeholder values, not a screenshot of a live session.
 
 <p align="center">
-  <img src="docs/assets/attendiq-banner.svg" alt="Attend-IQ: Smart Attendance Management System, Java OOP, JDBC, MySQL" width="900">
+  <img src="docs/assets/console-preview.svg" alt="Illustrative Attend-IQ console layout" width="900">
 </p>
+
+---
+
+## 🧰 Technology Stack
+
+<div align="center">
+
+| | Technology | Role |
+| :-: | :-- | :-- |
+| ☕ | **Java 25** | Console app, services, domain records, validation, transactions |
+| 🐬 | **MySQL 8+** | Relational storage, keys, constraints, attendance history |
+| 🔌 | **JDBC / Connector/J 9.4.0** | Prepared statements, transactions, generated keys |
+| 📦 | **Apache Maven 3.9+** | Build, dependencies, test, run |
+| 🧪 | **JUnit 5.11.4** | Unit tests and opt-in MySQL integration test |
+| ⚙️ | **GitHub Actions** | Build and test on push, pull request and manual run |
+
+</div>
+
+> Badges describe the configured stack, not a measured source-code language percentage.
+
+---
+
+## 🏗️ Architecture
 
 <p align="center">
-  <a href="https://github.com/vishweshwaranbalasundaram/Attend-IQ/actions/workflows/verify.yml"><img src="https://github.com/vishweshwaranbalasundaram/Attend-IQ/actions/workflows/verify.yml/badge.svg" alt="Maven verification"></a>
-  <img src="https://img.shields.io/badge/Java-25-ED8B00?logo=openjdk&logoColor=white" alt="Java 25">
-  <img src="https://img.shields.io/badge/Maven-3.9%2B-C71A36?logo=apachemaven&logoColor=white" alt="Maven 3.9 or newer">
-  <img src="https://img.shields.io/badge/MySQL-8%2B-4479A1?logo=mysql&logoColor=white" alt="MySQL 8 or newer">
-  <img src="https://img.shields.io/badge/JDBC-Connector%2FJ-007396" alt="JDBC">
-  <img src="https://img.shields.io/badge/JUnit-5-25A162?logo=junit5&logoColor=white" alt="JUnit 5">
-  <img src="https://img.shields.io/badge/Git-source--control-F05032?logo=git&logoColor=white" alt="Git source control">
-  <img src="https://img.shields.io/badge/GitHub-repository-181717?logo=github&logoColor=white" alt="GitHub repository">
+  <img src="docs/assets/architecture.svg" alt="Attend-IQ layered architecture: presentation, service, repository and data layers" width="900">
 </p>
 
-**A database-backed attendance management system built as a Java console application.** Attend-IQ demonstrates Java OOP, JDBC, SQL, and MySQL through an academic workflow with colored terminal navigation. It has no web frontend or GUI.
-
-**Project guide:** [Architecture](docs/ARCHITECTURE.md) | [Database schema](docs/DATABASE_SCHEMA.md) | [User guide](docs/USER_GUIDE.md) | [Testing](docs/TESTING.md) | [Project report](docs/PROJECT_REPORT.md) | [Demo script](docs/DEMO_SCRIPT.md) | [Viva questions](docs/VIVA_QUESTIONS.md)
-
-## Project Overview
-
-Manual attendance can be slow to reconcile and can result in duplicate marks or marks for students who are not enrolled in a class. Attend-IQ models the workflow in a relational database and validates the class session and student enrollment before saving attendance.
-
-### Objectives
-
-- Demonstrate Java object-oriented design, JDBC connectivity, SQL, and MySQL persistence.
-- Provide console CRUD workflows for students, faculty, subjects, enrollments, and class sessions.
-- Record and report attendance with database constraints and service-level validation.
-- Keep the project understandable and demonstrable as a college OOP and DBMS project.
-
-## Technology Stack
-
-| Technology | Role in this project |
-| --- | --- |
-| Java 25 | Console application, services, domain records, validation, and transactions |
-| Apache Maven 3.9+ | Dependency management, compilation, tests, packaging, and execution |
-| JDBC / MySQL Connector/J 9.4.0 | Java database connectivity and prepared SQL statements |
-| MySQL 8+ | Persistent relational data, keys, constraints, and attendance history |
-| JUnit 5.11.4 | Unit and opt-in MySQL integration tests |
-| JaCoCo 0.8.14 | Maven line-coverage reports; CI targets 70% aggregate coverage for service classes |
-| Git and GitHub | Source control and repository verification workflow |
-
-The repository does not publish language-percentage figures; no verified GitHub language breakdown was captured for this README. Technology badges describe the configured stack, not source-code distribution.
-
-## Feature Overview
-
-| Area | Implemented capabilities |
-| --- | --- |
-| Students | Create, list, view, update, delete when history permits, and search by name or registration prefix |
-| Faculty | Create, list, view, update, delete subject to foreign keys, and list assigned subjects |
-| Subjects | Create, list, view, update, and delete when enrollment/session history permits |
-| Enrollments | Enroll/remove students and list relationships by student or subject |
-| Class sessions | Create, list, view, update/delete before attendance exists, and filter by subject/date range |
-| Attendance | Mark PRESENT, ABSENT, or ON_DUTY; retrieve by session, student, or subject/date range |
-| Bulk attendance | Preview a subject roster and proposed marks; skip existing rows and report per-row results |
-| Corrections | Correct/delete with a reason and an assigned-faculty check; retain attendance audit events |
-| Reports | Student/subject percentage, subject summaries, shortage forecast, and attendance history filters |
-| Dashboard | Database-backed totals, today's roster status, below-target count, and recent attendance audit activity |
-| CSV export | Export students, filtered attendance, subject summaries, and shortage reports with overwrite confirmation |
-| System diagnostics | Test a JDBC connection and inspect Java/database information without displaying credentials |
-| Console UI | ANSI colors with a no-color option, responsive panels/tables, pagination, and progress bars |
-
-These workflows demonstrate CRUD, validation, JDBC, SQL constraints, transaction handling, exception handling, and separation of presentation, service, and persistence responsibilities.
-
-## Console Preview
-
-This is an **illustrative terminal mockup**, not a screenshot of a live application session. Placeholder labels are used instead of fabricated database values. The application reads dashboard figures from the configured MySQL database.
-
-<p align="center">
-  <img src="docs/assets/console-preview.svg" alt="Illustrative Attend-IQ console layout with placeholder dashboard values" width="900">
-</p>
-
-## Project Health and Live Status
-
-The workflow badge at the top reflects the GitHub Actions Maven verification workflow. It runs on pushes, pull requests, and manual dispatch; it starts a disposable MySQL 8.4 service and runs the MySQL integration test against the isolated `attendiq_java_test` database. No remote workflow result is claimed here until GitHub records a run.
-
-The last recorded local Maven verification on **2026-10-19** predates the authentication and coverage changes. The current build must be verified with `mvn clean verify`; a CI pass is claimed only after GitHub Actions completes successfully.
-
-## Architecture
+The same design as a dependency diagram:
 
 ```mermaid
 flowchart LR
-    Operator[Operator] --> Input[ConsoleInput]
-    Input --> App[App / Presentation]
-    App --> UI[ConsoleUI / ConsoleTable / ConsoleStyle]
-    App --> AttendanceService
-    App --> StudentService
-    App --> CatalogService[AcademicCatalogService]
-    App --> Dashboard[DashboardRepository]
-    App --> CSV[CsvExporter]
-    AttendanceService --> AttendancePort[AttendanceRepository]
-    StudentService --> StudentPort[StudentRepository]
-    CatalogService --> CatalogPort[AcademicCatalogRepository]
-    AttendancePort --> JDBC[Prepared SQL / JDBC]
-    StudentPort -. implemented by .-> StudentJdbc[JdbcAcademicRepository]
-    CatalogPort -. implemented by .-> CatalogJdbc[JdbcAcademicCatalogRepository]
+    classDef ui fill:#06b6d4,stroke:#0e7490,color:#fff
+    classDef svc fill:#8b5cf6,stroke:#6d28d9,color:#fff
+    classDef repo fill:#f59e0b,stroke:#b45309,color:#fff
+    classDef db fill:#10b981,stroke:#047857,color:#fff
+    classDef misc fill:#64748b,stroke:#334155,color:#fff
+
+    Operator([👤 Operator]):::misc --> Input[ConsoleInput]:::ui
+    Input --> App[App / Presentation]:::ui
+    App --> UI[ConsoleUI / ConsoleTable / ConsoleStyle]:::ui
+
+    App --> AttendanceService:::svc
+    App --> StudentService:::svc
+    App --> CatalogService[AcademicCatalogService]:::svc
+    App --> FacultyAuthService:::svc
+    App --> Dashboard[DashboardRepository]:::repo
+    App --> CSV[CsvExporter]:::misc
+
+    AttendanceService --> AttendancePort[AttendanceRepository]:::repo
+    StudentService --> StudentPort[StudentRepository]:::repo
+    CatalogService --> CatalogPort[AcademicCatalogRepository]:::repo
+
+    StudentPort -. implemented by .-> StudentJdbc[JdbcAcademicRepository]:::repo
+    CatalogPort -. implemented by .-> CatalogJdbc[JdbcAcademicCatalogRepository]:::repo
+
+    AttendancePort --> JDBC[Prepared SQL / JDBC]:::db
     StudentJdbc --> JDBC
     CatalogJdbc --> JDBC
     Dashboard --> JDBC
-    JDBC --> Database[Database connection config]
-    Database --> Connector[MySQL Connector/J]
-    Connector --> MySQL[(MySQL: attendiq_java)]
-    Services[Student, Faculty, Subject, Enrollment, Session, Attendance and report records] -. domain values .-> App
-    Status[AttendanceStatus enum] -. allowed values .-> AttendanceService
+    JDBC --> Database[Database env config]:::db
+    Database --> Connector[MySQL Connector/J]:::db
+    Connector --> MySQL[(MySQL: attendiq_java)]:::db
 ```
 
-`App` and the console helpers collect input and render output. Services enforce use-case rules and coordinate multi-step operations. Repository interfaces define persistence operations, and JDBC implementations own SQL. Domain records carry returned values; the enum restricts attendance status. `Database` reads connection settings from environment variables.
+**Layer rules**
+- 🟦 **Presentation** (`App`, console helpers) collects input and renders output.
+- 🟪 **Services** enforce use-case rules and coordinate multi-step transactions.
+- 🟧 **Repositories** define persistence operations; JDBC classes own the SQL.
+- 🟩 **Database** reads connection settings from environment variables.
 
-## Attendance Marking Workflow
+---
+
+## 🔄 Workflows
+
+### ✅ Attendance marking
 
 ```mermaid
 sequenceDiagram
+    autonumber
     actor Operator
-    participant App as Console presentation
+    participant App as Console
     participant S as AttendanceService
     participant R as AttendanceRepository
     participant DB as MySQL
-    Operator->>App: Choose session, enrolled student, and status
+
+    Operator->>App: Choose session, student and status
     App->>S: markAttendance(sessionId, studentId, status)
-    S->>DB: Begin transaction
+    S->>DB: BEGIN
     S->>R: Find session subject
-    R->>DB: Select class session
+    R->>DB: SELECT class_sessions
     DB-->>S: Subject ID or not found
     S->>R: Verify enrollment
-    R->>DB: Select enrollment with lock
-    DB-->>S: Enrolled or not enrolled
-    S->>R: Insert attendance and read saved row
+    R->>DB: SELECT enrollments (with lock)
+    DB-->>S: Enrolled / not enrolled
+    S->>R: Insert attendance + audit row
     R->>DB: INSERT and SELECT
-    DB-->>S: Persisted record or constraint error
-    S->>DB: Commit on success / rollback on failure
-    S-->>App: Saved record or error
-    App-->>Operator: Show actual result
+    DB-->>S: Saved row or constraint error
+    alt success
+        S->>DB: COMMIT
+        S-->>App: Saved record
+        App-->>Operator: ✅ Success message
+    else failure
+        S->>DB: ROLLBACK
+        S-->>App: Error
+        App-->>Operator: ❌ Actual error shown
+    end
 ```
 
-The service checks that the session exists and the student is enrolled. MySQL enforces the unique `(session_id, student_id)` attendance key, including concurrent duplicate attempts. A success message follows the successful commit.
+### ✏️ Correction / delete flow
 
-## Database ER Diagram
+```mermaid
+flowchart TD
+    A([Choose correct or delete]):::start --> B[Enter faculty ID and password]
+    B --> C[FacultyAuthService authenticates and audits attempt]
+    C --> D{Authenticated?}
+    D -- No --> X1[Reject operation]:::bad
+    D -- Yes --> E[Enter session, student and reason]
+    E --> F{Session and record exist?}
+    F -- No --> X2[Show not found]:::bad
+    F -- Yes --> G{Faculty assigned to subject?}
+    G -- No --> X3[Reject: not assigned]:::bad
+    G -- Yes --> H[BEGIN transaction]
+    H --> I[Update or delete attendance row]
+    I --> J[Write attendance audit event with reason]
+    J --> K{All steps OK?}
+    K -- Yes --> L[COMMIT]:::ok
+    K -- No --> M[ROLLBACK]:::bad
+    L --> N([Show result]):::start
+    M --> N
+
+    classDef start fill:#3b82f6,stroke:#1d4ed8,color:#fff
+    classDef ok fill:#10b981,stroke:#047857,color:#fff
+    classDef bad fill:#ef4444,stroke:#b91c1c,color:#fff
+```
+
+### 📦 Bulk attendance
+
+```mermaid
+flowchart LR
+    A[Pick subject + session]:::a --> B[Load enrolled roster]:::a
+    B --> C[Preview proposed marks]:::b
+    C --> D{Confirm?}
+    D -- No --> Z([Cancel]):::c
+    D -- Yes --> E[Insert each row]:::b
+    E --> F[Skip rows that already exist]:::b
+    F --> G[Per-row result summary]:::d
+
+    classDef a fill:#06b6d4,stroke:#0e7490,color:#fff
+    classDef b fill:#8b5cf6,stroke:#6d28d9,color:#fff
+    classDef c fill:#64748b,stroke:#334155,color:#fff
+    classDef d fill:#10b981,stroke:#047857,color:#fff
+```
+
+### 🧪 Build and CI pipeline
+
+```mermaid
+flowchart LR
+    P[git push / PR]:::a --> W[GitHub Actions]:::b
+    W --> J[Set up Java 25]:::b
+    J --> M[Start MySQL 8.4 service]:::c
+    M --> S[Load schema-test.sql]:::c
+    S --> V[mvn clean verify]:::d
+    V --> T{Unit tests + MySQL integration test}
+    T -- pass --> OK([✅ Green]):::ok
+    T -- fail --> NO([❌ Red]):::bad
+
+    classDef a fill:#64748b,stroke:#334155,color:#fff
+    classDef b fill:#2088ff,stroke:#1d4ed8,color:#fff
+    classDef c fill:#4479a1,stroke:#1e3a5f,color:#fff
+    classDef d fill:#f59e0b,stroke:#b45309,color:#fff
+    classDef ok fill:#10b981,stroke:#047857,color:#fff
+    classDef bad fill:#ef4444,stroke:#b91c1c,color:#fff
+```
+
+> The workflow file includes a MySQL service so the integration test can run in CI. No remote result is claimed until GitHub records a run.
+
+---
+
+## 🗄️ Database ER Diagram
 
 ```mermaid
 erDiagram
@@ -146,10 +291,16 @@ erDiagram
     SUBJECTS ||--o{ CLASS_SESSIONS : schedules
     STUDENTS ||--o{ ATTENDANCE_RECORDS : receives
     CLASS_SESSIONS ||--o{ ATTENDANCE_RECORDS : records
+    CLASS_SESSIONS ||--o{ ATTENDANCE_AUDIT_LOG : audited
+    STUDENTS ||--o{ ATTENDANCE_AUDIT_LOG : audited
+    FACULTY ||--o{ ATTENDANCE_AUDIT_LOG : claimed_by
+    FACULTY ||--o| LOGIN_ATTEMPTS : lockout_state
+
     FACULTY {
         BIGINT faculty_id PK
         VARCHAR full_name
         VARCHAR email UK
+        VARCHAR password_hash "V4, nullable"
     }
     SUBJECTS {
         BIGINT subject_id PK
@@ -181,57 +332,88 @@ erDiagram
         ENUM status
         TIMESTAMP marked_at
     }
+    ATTENDANCE_AUDIT_LOG {
+        BIGINT audit_id PK
+        BIGINT session_id FK
+        BIGINT student_id FK
+        ENUM event_type
+        ENUM previous_status
+        ENUM new_status
+        VARCHAR reason
+        BIGINT claimed_faculty_id FK
+    }
+    LOGIN_ATTEMPTS {
+        BIGINT faculty_id PK,FK
+        INT failed_attempts
+        TIMESTAMP locked_until
+    }
+    FACULTY_AUTH_AUDIT_LOG {
+        BIGINT audit_id PK
+        BIGINT attempted_faculty_id
+        ENUM event_type
+        TIMESTAMP recorded_at
+    }
 ```
 
-`ENROLLMENTS` has a composite `(student_id, subject_id)` primary key. Class sessions are unique per subject/date/period; attendance is unique per session/student. The full table and migration details are in [DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md).
+`ENROLLMENTS` has a composite `(student_id, subject_id)` key. Sessions are unique per subject/date/period; attendance is unique per session/student. `FACULTY_AUTH_AUDIT_LOG` deliberately has no foreign key so failed attempts for unknown faculty IDs can be recorded. Full details: [DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md).
 
-## Database Integrity and Security
+---
 
-- JDBC values are bound with `PreparedStatement`; database resources use try-with-resources.
-- Primary/foreign keys, unique identifiers, an enrollment composite key, session schedule uniqueness, and attendance uniqueness protect relational integrity.
-- Attendance marking and audited corrections/deletions use transactions with rollback on failure.
-- Existing enrollment and attendance history protects records from unsafe deletion. The application does not drop or reset user data.
-- Database credentials come from `ATTENDIQ_DB_URL`, `ATTENDIQ_DB_USER`, and `ATTENDIQ_DB_PASSWORD`; the password is never printed.
-- Attendance correction/deletion checks the assigned faculty ID and verifies its salted PBKDF2 password hash. New faculty accounts set a password when created; configured accounts must authenticate before changing it.
-- Five failed logins lock an account for five minutes. Successful, failed, and locked login events are recorded without passwords in `faculty_auth_audit_log`.
-- Attendance events remain in `attendance_audit_log`; catalog edits and failed attendance authorization attempts are not audited.
+## 🔐 Database Integrity and Security
 
-## Project Structure
+| 🛡️ Protection | Detail |
+| :-- | :-- |
+| SQL injection | Values bound with `PreparedStatement`; resources closed with try-with-resources |
+| Integrity | Primary/foreign/composite keys, unique identifiers, schedule and attendance uniqueness |
+| Transactions | Marking and audited corrections/deletions commit or roll back as one unit |
+| Safe deletes | Enrollment and attendance history blocks unsafe deletion; the app never drops or resets data |
+| Credentials | `ATTENDIQ_DB_URL`, `ATTENDIQ_DB_USER`, `ATTENDIQ_DB_PASSWORD`; password never printed |
+| Password hashing (new) | `PasswordHasher`: PBKDF2-HMAC-SHA256, 210,000 iterations, random salt, constant-time compare |
+| Audit | Attendance changes use V3; password-free login success/failure/lockout events use V5 |
+
+> Attendance correction and deletion now require the assigned faculty ID and a verified password. Passwords are salted PBKDF2 hashes; login failures are rate-limited and recorded without passwords.
+
+---
+
+## 📁 Project Structure
 
 ```text
-java-attendance/
-|-- ../.github/workflows/verify.yml
-|-- database/migrations/            # V2 search index through V5 login security
-|-- docker-compose.yml              # MySQL only; initializes the schema on first start
-|-- docs/                           # architecture, schema, user and project guides
-|   `-- assets/                     # repository-owned SVG banner and preview
-|-- src/main/java/com/attendiq/     # console, services, domain, JDBC repositories
-|-- src/main/resources/schema.sql
-|-- src/test/java/com/attendiq/     # unit and opt-in MySQL integration tests
-|-- src/test/resources/schema-test.sql
-|-- pom.xml
-`-- README.md
+Attend-IQ/
+├── .github/workflows/verify.yml      # CI: Java 25 + MySQL service + mvn verify
+├── database/migrations/              # V2 search index through V5 login security
+├── docs/                             # architecture, schema, user, testing, report, viva
+│   └── assets/                       # banner, console preview, architecture SVG
+├── src/main/java/com/attendiq/       # console, services, domain, JDBC repositories
+├── src/main/resources/schema.sql     # fresh-install schema + demo rows
+├── src/test/java/com/attendiq/       # unit tests + opt-in MySQL integration test
+├── src/test/resources/schema-test.sql
+├── pom.xml
+└── README.md
 ```
 
-## Prerequisites
+---
 
-- JDK 25 or newer
-- Apache Maven 3.9 or newer
-- MySQL 8 or newer
-- MySQL Workbench (optional; used in the examples to run SQL scripts)
-- Docker Compose (optional; starts only MySQL and initializes the schema)
+## 🛠️ Full Setup
 
-## Install and Configure (Windows PowerShell)
+**Prerequisites:** JDK 25+, Apache Maven 3.9+, MySQL 8+, MySQL Workbench (optional).
 
-### 1. Prepare the database
+<details>
+<summary><b>1️⃣ Prepare the database</b></summary>
 
-For a fresh local database, open `src/main/resources/schema.sql` in MySQL Workbench and execute it. The script creates `attendiq_java`, the application tables, migration tracking, and optional demo rows. It uses `CREATE TABLE IF NOT EXISTS` and `INSERT IGNORE`; it does not drop tables or reset existing rows.
+For a fresh database, execute `src/main/resources/schema.sql`. It creates `attendiq_java`, the tables, migration tracking and optional demo rows using `CREATE TABLE IF NOT EXISTS` and `INSERT IGNORE`. It does not drop tables or reset rows.
 
-For an existing V1 database, back it up and apply V2, V3, V4, and V5 in order from `database/migrations/`. The System menu never performs migrations automatically.
+For an existing database, **back it up first**, then apply in order:
 
-### 2. Set Java, Maven, and database configuration
+1. `database/migrations/V2__student_name_search_index.sql`
+2. `database/migrations/V3__attendance_audit_log.sql`
+3. `database/migrations/V4__faculty_password_hash.sql`
+4. `database/migrations/V5__faculty_login_lockout_and_audit.sql`
 
-Run these commands in the PowerShell window from which you will launch the application. Adjust `JAVA_HOME` and the project path to match your installation. Set the MySQL password locally; do not commit or share it.
+The System menu never runs migrations automatically.
+</details>
+
+<details>
+<summary><b>2️⃣ Configure (Windows PowerShell)</b></summary>
 
 ```powershell
 Set-Location "$HOME\Downloads\AttendIQ-java-attendance-starter\java-attendance"
@@ -242,94 +424,132 @@ $env:ATTENDIQ_DB_URL = 'jdbc:mysql://localhost:3306/attendiq_java?useSSL=false&a
 $env:ATTENDIQ_DB_USER = 'root'
 $env:ATTENDIQ_DB_PASSWORD = 'YOUR_MYSQL_PASSWORD'
 $env:ATTENDIQ_ATTENDANCE_TARGET = '75'
-$env:ATTENDIQ_COLOR = 'always' # use 'never' for plain output; omit for auto-detection
+$env:ATTENDIQ_COLOR = 'always'   # 'never' for plain output; omit for auto
 ```
 
-The URL option `allowPublicKeyRetrieval=true` is included for local development with non-TLS MySQL authentication. Prefer TLS with certificate verification for remote or production database connections. If the local MySQL account has no password, set the password variable to an empty string. These environment variables apply only to the current PowerShell session.
+`allowPublicKeyRetrieval=true` is for local development. Prefer TLS with certificate verification for remote or production databases. Variables apply only to the current PowerShell session.
+</details>
 
-To start only the local MySQL service instead of installing MySQL directly, set a local password with `$env:ATTENDIQ_DB_PASSWORD = Read-Host 'Local MySQL password'`, then run `docker compose up -d mysql`. The schema is loaded only when the named data volume is first initialized. `docker compose down` stops MySQL; `docker compose down -v` also deletes its data volume.
+<details>
+<summary><b>3️⃣ Environment variables</b></summary>
 
-New faculty set an initial password from Faculty Management. A trusted administrator can initialize a legacy/null-hash faculty account from the Set/change faculty password menu by setting `ATTENDIQ_ALLOW_INITIAL_PASSWORD_SETUP=true` for that setup session, then removing it afterward. Accounts with a configured password must authenticate with the current password before changing it.
-
-## Build, Test, and Run
+| Variable | Purpose | Default |
+| :-- | :-- | :-- |
+| `ATTENDIQ_DB_URL` | JDBC URL | `jdbc:mysql://localhost:3306/attendiq_java?useSSL=false&serverTimezone=UTC` |
+| `ATTENDIQ_DB_USER` | MySQL user | `root` |
+| `ATTENDIQ_DB_PASSWORD` | MySQL password | empty |
+| `ATTENDIQ_ATTENDANCE_TARGET` | Target percentage, integer 1 to 100 | `75` |
+| `ATTENDIQ_COLOR` | `always` / `never` (also honors `NO_COLOR=1`) | auto |
+| `ATTENDIQ_RUN_MYSQL_IT` | `true` enables the MySQL integration test | off |
+</details>
 
 ```powershell
-mvn clean verify
-mvn exec:java
+mvn clean verify     # compile + run the default test suite
+mvn exec:java        # start com.attendiq.App
 ```
 
-`mvn clean verify` compiles production and test sources, runs unit tests, and writes a JaCoCo report. `mvn exec:java` starts `com.attendiq.App`. MySQL integration tests are opt-in locally and run in GitHub Actions; details are in [TESTING.md](docs/TESTING.md).
+---
 
-## Main Menu and Usage
+## 🖥️ Main Menu
 
-| Choice | Module |
-| --- | --- |
-| 1 | Dashboard and quick actions |
-| 2 | Student Management |
-| 3 | Faculty Management |
-| 4 | Subject Management |
-| 5 | Enrollment Management |
-| 6 | Class Session Management |
-| 7 | Attendance Management, including bulk marking and correction |
-| 8 | Reports & Analytics |
-| 9 | CSV exports |
-| 10 | System & Database diagnostics |
-| 11 | Help & Shortcuts |
-| 0 | Exit (`12` is also accepted for compatibility) |
+| Key | Module | Key | Module |
+| :-: | :-- | :-: | :-- |
+| `1` | 📊 Dashboard and quick actions | `7` | ✅ Attendance (bulk marking, correction) |
+| `2` | 👩‍🎓 Student Management | `8` | 📈 Reports & Analytics |
+| `3` | 👨‍🏫 Faculty Management | `9` | 📤 CSV exports |
+| `4` | 📘 Subject Management | `10` | 🩺 System & Database diagnostics |
+| `5` | 🔗 Enrollment Management | `11` | ❓ Help & Shortcuts |
+| `6` | 🗓️ Class Session Management | `0` | 🚪 Exit (`12` also accepted) |
 
-Submenus use `0` to return. The dashboard quick-action prompt can also be skipped with `0`. Tables page results at 12 rows; press Enter for the next page or `q` to stop. Color detection supports Windows Terminal and VS Code terminals; `ATTENDIQ_COLOR=always` forces ANSI output, while `ATTENDIQ_COLOR=never` or `NO_COLOR=1` disables it.
+Submenus use `0` to go back. Tables show 12 rows per page: press Enter for the next page or `q` to stop.
 
-## Attendance Calculation and Reporting Policy
+---
 
-For one student and subject, the report counts scheduled sessions from the enrollment date through today. `PRESENT` and `ON_DUTY` count as attended. `ABSENT` and unmarked scheduled sessions do not count as attended; unmarked sessions are shown separately and remain in the denominator.
+## 📐 Attendance Calculation Policy
+
+`PRESENT` and `ON_DUTY` count as attended. `ABSENT` and **unmarked** scheduled sessions do not count, and unmarked sessions stay in the denominator.
 
 ```text
-percentage = 100 * (present + on-duty) / scheduled sessions
+percentage = 100 × (present + on-duty) / scheduled sessions
 ```
 
-With no scheduled sessions, the result is `0%` with an explanatory message. The shortage forecast finds the smallest `x` for which `(attended + x) / (scheduled + x) >= target / 100`. The default target is 75%; `ATTENDIQ_ATTENDANCE_TARGET` accepts an integer from 1 to 100. If the target is 100% and an absence already exists, the forecast is unreachable.
+- No scheduled sessions → `0%` with an explanation.
+- **Shortage forecast:** the smallest `x` where `(attended + x) / (scheduled + x) ≥ target / 100`. If the target is 100% and an absence already exists, it is unreachable.
+- **Dashboard:** totals come from MySQL. Today's rate = attended marks ÷ roster expected today. Below-target counts enrolled student/subject pairs under the threshold.
 
-Dashboard totals are queried from MySQL. Today's rate uses attended marks divided by the enrolled roster expected for sessions today. The below-target number counts enrolled student/subject pairs below the configured threshold. Recent activity is read from the attendance audit table.
+---
 
-## Automated Testing
+## 🧪 Testing & CI
 
-Unit tests cover service validation, attendance calculations, console input/rendering, CSV escaping, bulk-result handling, password hashing, and fake-clock login lockout. MySQL integration tests cover persistence, faculty authentication, lockout persistence, and password-free auth auditing in a dedicated `attendiq_java_test` database created from `src/test/resources/schema-test.sql`. Never point them at a personal or production database.
+| ✅ Covered | 📝 Notes |
+| :-- | :-- |
+| Service validation, attendance calculations | Unit tests |
+| Console input and rendering, CSV escaping/overwrite, bulk results | Unit tests |
+| Password hashing and fake-clock lockout policy | Unit tests |
+| MySQL persistence and faculty authentication | Opt-in `AttendanceMySqlIntegrationTest` and `FacultyAuthServiceIntegrationTest` |
 
-The last local verification recorded on **2026-10-19** predates the faculty authentication and CI changes. Run `mvn clean verify` to reproduce the unit suite; GitHub Actions also runs the integration test against MySQL 8.4. See [TESTING.md](docs/TESTING.md) for details.
+**Local result (2026-10-20):** `mvn clean verify` with MySQL 8.4 and `ATTENDIQ_RUN_MYSQL_IT=true` completed 45 tests, 0 failures, 0 errors, 0 skipped. JaCoCo reported 92.7% aggregate line coverage across service classes. This is a local result; GitHub Actions has not yet been run.
 
-## Documentation
+The MySQL integration tests require a dedicated database whose name ends with `_test`, created from `src/test/resources/schema-test.sql`. Never point them at a personal or production database.
 
-- [Architecture and OOP design](docs/ARCHITECTURE.md)
-- [Database tables, constraints, and migrations](docs/DATABASE_SCHEMA.md)
-- [User guide and troubleshooting](docs/USER_GUIDE.md)
-- [Testing and integration-test safety](docs/TESTING.md)
-- [Academic project report](docs/PROJECT_REPORT.md)
-- [Demonstration walkthrough](docs/DEMO_SCRIPT.md)
-- [Viva questions and answers](docs/VIVA_QUESTIONS.md)
+---
 
-## Known Limitations
+## 🗺️ Roadmap
 
-- Faculty password setup for legacy accounts requires a trusted setup session; this is a local console login, not a centralized identity service.
-- Attendance audit history does not cover catalog edits or failed attendance-authorization attempts.
-- Local MySQL integration tests need a separately configured `_test` database; GitHub Actions provisions one automatically.
-- The application is a local console program; it has no hosted service, web API, frontend, or online attendance dashboard.
-- There is no automatic schema migration runner; migrations must be applied manually after backing up the database.
+| Status | Item |
+| :-: | :-- |
+| ✅ | Console CRUD, attendance, bulk marking, corrections, audit, reports, CSV export |
+| ✅ | PBKDF2 `PasswordHasher`, `FacultyAuthService`, V4 `password_hash` column |
+| ✅ | CI workflow with MySQL service for the integration test |
+| ✅ | Wire faculty password login into `App` for correction/delete |
+| ✅ | Set/change faculty password menu option |
+| ✅ | Login attempt tracking and temporary lockout (V5) |
+| ✅ | JaCoCo report and 70% service coverage target in CI |
+| ✅ | `docker-compose.yml` with MySQL only and schema initialization |
 
-## Academic Learning Outcomes
+---
 
-- **OOP:** encapsulation and composition in services; repository interfaces show abstraction and polymorphic implementations; records/enums model domain data. Inheritance is not forced where no useful is-a relationship exists.
-- **DBMS:** normalized relationships, primary/foreign/composite keys, uniqueness, and referential integrity.
-- **JDBC:** connections, prepared statements, result sets, generated keys, transaction commit, and rollback.
-- **Software design:** layered responsibilities, input validation, exception handling, testable services, and database-backed reports.
+## ⚠️ Known Limitations
 
-## Contributing
+- The console uses local faculty passwords, not a centralized identity provider.
+- Login attempts are audited separately; catalog changes and failed attendance authorization attempts are not audited.
+- Local integration tests need a separate `_test` database; CI creates one automatically.
+- Local console program only: no hosted service, web API or frontend.
+- No automatic schema migration runner; apply migrations manually after a backup.
 
-For a change, create a focused branch, preserve the console/JDBC/MySQL architecture, and update documentation when user-visible behavior changes. Run `mvn clean verify` before opening a pull request. Do not include credentials, personal attendance data, generated exports, or changes that reset a development database.
+---
 
-## License
+## 🎓 Learning Outcomes
 
-No license file is currently present in this repository. No open-source license is claimed by this README.
+| Area | What it demonstrates |
+| :-- | :-- |
+| **OOP** | Encapsulation and composition in services, repository interfaces with polymorphic implementations, records and enums |
+| **DBMS** | Normalized relations, primary/foreign/composite keys, uniqueness, referential integrity |
+| **JDBC** | Connections, prepared statements, result sets, generated keys, commit and rollback |
+| **Design** | Layered responsibilities, validation, exception handling, testable services, database-backed reports |
 
-## Acknowledgements
+---
 
-The project uses Apache Maven, MySQL Connector/J, and JUnit 5; dependency versions are maintained in `pom.xml`.
+## 📚 Documentation
+
+[Architecture](docs/ARCHITECTURE.md) · [Database schema](docs/DATABASE_SCHEMA.md) · [User guide](docs/USER_GUIDE.md) · [Testing](docs/TESTING.md) · [Project report](docs/PROJECT_REPORT.md) · [Demo script](docs/DEMO_SCRIPT.md) · [Viva questions](docs/VIVA_QUESTIONS.md)
+
+---
+
+## 🤝 Contributing
+
+Create a focused branch, keep the console/JDBC/MySQL architecture, update docs when behavior changes, and run `mvn clean verify` before a pull request. Do not commit credentials, personal attendance data, generated exports, or changes that reset a development database.
+
+## 📄 License
+
+No license file is currently present, so no open-source license is claimed.
+
+## 🙏 Acknowledgements
+
+Apache Maven, MySQL Connector/J and JUnit 5. Versions are maintained in `pom.xml`.
+
+<div align="center">
+
+**Built by [Vishweshwaran](https://github.com/vishweshwaranbalasundaram)** · Java · JDBC · MySQL
+
+</div>

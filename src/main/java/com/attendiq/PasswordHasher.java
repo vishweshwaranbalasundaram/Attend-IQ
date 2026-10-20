@@ -18,8 +18,6 @@ public final class PasswordHasher {
     private static final String PREFIX = "pbkdf2_sha256";
     private static final String ALGORITHM = "PBKDF2WithHmacSHA256";
     private static final int ITERATIONS = 210_000;
-    private static final int MIN_VERIFY_ITERATIONS = 100_000;
-    private static final int MAX_VERIFY_ITERATIONS = 1_000_000;
     private static final int SALT_BYTES = 16;
     private static final int KEY_BITS = 256;
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -48,10 +46,6 @@ public final class PasswordHasher {
             int iterations = Integer.parseInt(parts[1]);
             byte[] salt = Base64.getDecoder().decode(parts[2]);
             byte[] expected = Base64.getDecoder().decode(parts[3]);
-            if (iterations < MIN_VERIFY_ITERATIONS || iterations > MAX_VERIFY_ITERATIONS
-                    || salt.length != SALT_BYTES || expected.length != KEY_BITS / 8) {
-                return false;
-            }
             byte[] actual = derive(password, salt, iterations, expected.length * 8);
             return MessageDigest.isEqual(expected, actual);
         } catch (IllegalArgumentException ex) {

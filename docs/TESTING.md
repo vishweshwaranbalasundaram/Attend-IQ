@@ -34,7 +34,7 @@ mvn clean verify
 From the `java-attendance` directory, set a local-only password and start the sole Compose service:
 
 ```powershell
-$env:ATTENDIQ_DB_PASSWORD = 'choose-a-local-password'
+$env:ATTENDIQ_DB_PASSWORD = Read-Host 'Enter a local-only MySQL password'
 docker compose up -d mysql
 ```
 

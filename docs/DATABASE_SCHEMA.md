@@ -35,7 +35,7 @@ Attendance percentage is `100 * (PRESENT + ON_DUTY) / scheduled sessions`, count
 2. Set the JDBC URL, username, and password in local environment variables.
 3. Verify database connectivity from the application.
 
-The baseline schema includes the latest V1â€“V5 tables and optional demo rows. It uses `CREATE TABLE IF NOT EXISTS` and `INSERT IGNORE`; it does not drop or reset data.
+The baseline schema includes the latest V1–V5 tables and optional demo rows. It uses `CREATE TABLE IF NOT EXISTS` and `INSERT IGNORE`; it does not drop or reset data.
 
 ## Existing Database Migration
 
