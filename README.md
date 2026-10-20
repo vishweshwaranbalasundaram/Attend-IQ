@@ -450,16 +450,16 @@ mvn exec:java        # start com.attendiq.App
 
 ---
 
-## 🖥️ Main Menu
+## Main Menu
 
 | Key | Module | Key | Module |
 | :-: | :-- | :-: | :-- |
-| `1` | 📊 Dashboard and quick actions | `7` | ✅ Attendance (bulk marking, correction) |
-| `2` | 👩‍🎓 Student Management | `8` | 📈 Reports & Analytics |
-| `3` | 👨‍🏫 Faculty Management | `9` | 📤 CSV exports |
-| `4` | 📘 Subject Management | `10` | 🩺 System & Database diagnostics |
-| `5` | 🔗 Enrollment Management | `11` | ❓ Help & Shortcuts |
-| `6` | 🗓️ Class Session Management | `0` | 🚪 Exit (`12` also accepted) |
+| `1` | `[DB]` Dashboard and quick actions | `7` | `[AT]` Attendance (bulk marking, correction) |
+| `2` | `[ST]` Student Management | `8` | `[RP]` Reports & Analytics |
+| `3` | `[FC]` Faculty Management | `9` | `[CSV]` CSV exports |
+| `4` | `[SB]` Subject Management | `10` | `[SYS]` System & Database diagnostics |
+| `5` | `[EN]` Enrollment Management | `11` | `[?]` Help & Shortcuts |
+| `6` | `[CS]` Class Session Management | `0` | `[X]` Exit (`12` also accepted) |
 
 Submenus use `0` to go back. Tables show 12 rows per page: press Enter for the next page or `q` to stop.
 
