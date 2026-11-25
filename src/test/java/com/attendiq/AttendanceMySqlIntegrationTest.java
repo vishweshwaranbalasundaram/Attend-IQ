@@ -14,10 +14,28 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.flywaydb.core.Flyway;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 class AttendanceMySqlIntegrationTest {
+    @BeforeEach
+    void migrateApplicationSchemaBeforeCreatingFixtures() {
+        String databaseUrl = System.getenv("ATTENDIQ_DB_URL");
+        String databaseUser = System.getenv("ATTENDIQ_DB_USER");
+        String databasePassword = System.getenv("ATTENDIQ_DB_PASSWORD");
+        if (databaseUrl == null || databaseUser == null || databasePassword == null) {
+            throw new IllegalStateException("Set dedicated MySQL integration database credentials before running this test.");
+        }
+        Flyway.configure()
+                .dataSource(databaseUrl, databaseUser, databasePassword)
+                .locations("classpath:db/migration")
+                .baselineOnMigrate(true)
+                .load()
+                .migrate();
+    }
+
     @Test
     @EnabledIfEnvironmentVariable(named = "ATTENDIQ_RUN_MYSQL_IT", matches = "true")
     void persistsAttendanceAndEnforcesRulesInDedicatedMysqlDatabase() throws Exception {

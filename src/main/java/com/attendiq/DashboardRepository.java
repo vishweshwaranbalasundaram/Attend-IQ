@@ -89,7 +89,7 @@ public class DashboardRepository {
                 + "AND ar.student_id = e.student_id "
                 + "GROUP BY e.student_id, e.subject_id "
                 + "HAVING COUNT(cs.session_id) > 0 AND "
-                + "100.0 * SUM(CASE WHEN ar.status IN ('PRESENT', 'ON_DUTY') "
+                + "100.0 * SUM(CASE WHEN ar.status IN ('PRESENT', 'LATE', 'ON_DUTY') "
                 + "THEN 1 ELSE 0 END) / COUNT(cs.session_id) < ?"
                 + ") shortage";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {

@@ -32,12 +32,37 @@ jobs:
           distribution: temurin
           java-version: '25'
           cache: maven
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            functions/package-lock.json
       - name: Create dedicated _test database
         run: mysql -h 127.0.0.1 -uroot -pci_root_password < src/test/resources/schema-test.sql
       - name: Build, run unit tests and MySQL integration test
         env:
           ATTENDIQ_RUN_MYSQL_IT: 'true'
+          DEV_AUTH_BYPASS: 'true'
           ATTENDIQ_DB_URL: jdbc:mysql://127.0.0.1:3306/attendiq_java_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
           ATTENDIQ_DB_USER: root
           ATTENDIQ_DB_PASSWORD: ci_root_password
         run: mvn --batch-mode --no-transfer-progress clean verify
+      - name: Build frontend
+        working-directory: web
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: demo-api-key
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: localhost
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-attendiq
+          NEXT_PUBLIC_FIREBASE_APP_ID: demo-app-id
+          NEXT_PUBLIC_ALLOWED_EMAIL_DOMAIN: example.edu
+        run: |
+          npm ci
+          npm run build
+      - name: Build Firebase Auth Functions
+        working-directory: functions
+        run: |
+          npm ci
+          npm run build

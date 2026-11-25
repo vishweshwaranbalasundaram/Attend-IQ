@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="320" viewBox="0 0 1400 320" role="img" aria-labelledby="title description">
+  <title id="title">Attend-IQ V2</title>
+  <desc id="description">Full-stack campus attendance with Firebase identity, a Spring Boot API, and MySQL.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#142720"/>
+      <stop offset="1" stop-color="#315d4c"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e7d4b8"/>
+      <stop offset="1" stop-color="#bda27d"/>
+    </linearGradient>
+  </defs>
+  <rect width="1400" height="320" rx="28" fill="url(#background)"/>
+  <circle cx="1195" cy="50" r="205" fill="#ffffff" opacity=".035"/>
+  <circle cx="1310" cy="290" r="255" fill="#e7d4b8" opacity=".07"/>
+  <path d="M75 72h8v176h-8z" fill="url(#accent)"/>
+  <text x="120" y="146" fill="#f8f6ef" font-family="Segoe UI,Arial,sans-serif" font-size="68" font-weight="750" letter-spacing="2">ATTEND-IQ</text>
+  <text x="124" y="190" fill="#e7d4b8" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="700" letter-spacing="3">V2  /  FULL-STACK CAMPUS ATTENDANCE</text>
+  <text x="124" y="242" fill="#e2ece4" font-family="Segoe UI,Arial,sans-serif" font-size="21">Verified identities. Trusted check-ins. Clear attendance decisions.</text>
+  <g transform="translate(1110 96)" fill="none" stroke="#e7d4b8" stroke-width="5">
+    <circle cx="90" cy="65" r="58" opacity=".8"/>
+    <circle cx="90" cy="65" r="39" opacity=".55"/>
+    <circle cx="90" cy="65" r="20" opacity=".8"/>
+    <path d="M90 0v32M90 98v32M25 65h32M123 65h32" opacity=".6"/>
+  </g>
+  <text x="1200" y="268" text-anchor="middle" fill="#d5e0d6" font-family="Segoe UI,Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="2">STUDENT  /  STAFF</text>
+</svg>

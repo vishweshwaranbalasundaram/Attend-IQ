@@ -24,4 +24,13 @@ public final class AttendanceCalculator {
         double remaining = targetPercentage * (double) total - 100.0 * attended;
         return (long) Math.ceil(remaining / (100 - targetPercentage));
     }
+
+    public static long safeBunksRemaining(long attended, long total, int minimumPercentage) {
+        if (minimumPercentage < 1 || minimumPercentage > 100) {
+            throw new IllegalArgumentException("Minimum attendance percentage must be between 1 and 100.");
+        }
+        percentage(attended, total);
+        long percentageBuffer = 100L * attended - (long) minimumPercentage * total;
+        return Math.max(0, percentageBuffer / minimumPercentage);
+    }
 }

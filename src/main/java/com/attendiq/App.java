@@ -638,7 +638,7 @@ public class App {
         }
         switch (action) {
             case 1 -> {
-                System.out.println("1. PRESENT  2. ABSENT  3. ON_DUTY");
+                System.out.println("1. PRESENT  2. ABSENT  3. ON_DUTY  4. LATE");
                 AttendanceStatus next = AttendanceStatus.fromMenuChoice(readInt("New status: "));
                 String reason = readText("Correction reason: ");
                 UI.panel("ATTENDANCE CORRECTION", List.of("Previous status: "
@@ -726,7 +726,7 @@ public class App {
             UI.warning("Attendance already exists for this student/session; use correction explicitly.");
             return;
         }
-        UI.menu("ATTENDANCE STATUS", List.of("PRESENT", "ABSENT", "ON_DUTY"));
+        UI.menu("ATTENDANCE STATUS", List.of("PRESENT", "ABSENT", "ON_DUTY", "LATE"));
         AttendanceStatus status = AttendanceStatus.fromMenuChoice(readInt("Status: "));
         Student student = roster.stream().filter(value -> value.studentId() == studentId)
                 .findFirst().orElseThrow();

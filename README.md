@@ -1,555 +1,192 @@
-<div align="center">
+<p align="center">
+  <img src="docs/assets/attendiq-v2-banner.svg" alt="Attend-IQ V2" width="100%">
+</p>
 
-<img src="docs/assets/attendiq-banner.svg" alt="Attend-IQ: Smart Attendance Management System" width="900">
+<p align="center">
+  <strong>A full-stack attendance platform for students and staff</strong><br>
+  Firebase Authentication · Spring Boot · MySQL · Next.js
+</p>
 
-# Attend-IQ
+<p align="center">
+  <a href="#screenshots">Screenshots</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#run-locally">Run locally</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="#documentation">Documentation</a>
+</p>
 
-### Smart Attendance Management System: Java | JDBC | MySQL
+# Attend-IQ V2
 
-*A database-backed console application with colored terminal navigation, attendance reports, audit history and CSV export.*
+Attend-IQ V2 evolves the original Java attendance project into a full-stack web application. It combines institutional Firebase sign-in, a Spring Boot REST API, MySQL persistence, student and staff workspaces, and an editorial Liquid Glass-inspired interface.
 
-<br>
+> **Project status:** This repository contains the application and deployment configuration. Production Firebase, Cloud Run, and Cloud SQL resources must be provisioned and configured separately; this README does not claim a live production deployment.
 
-<img src="https://img.shields.io/badge/Language-Java_25-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 25">
-<img src="https://img.shields.io/badge/Database-MySQL_8+-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL 8+">
-<img src="https://img.shields.io/badge/Connectivity-JDBC-007396?style=for-the-badge&logo=java&logoColor=white" alt="JDBC">
-<img src="https://img.shields.io/badge/Build-Maven_3.9+-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white" alt="Maven">
+## Screenshots
 
-<img src="https://img.shields.io/badge/Tests-JUnit_5-25A162?style=for-the-badge&logo=junit5&logoColor=white" alt="JUnit 5">
-<img src="https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" alt="GitHub Actions">
-<img src="https://img.shields.io/badge/VCS-Git-F05032?style=for-the-badge&logo=git&logoColor=white" alt="Git">
-<img src="https://img.shields.io/badge/UI-Console_(ANSI)-111827?style=for-the-badge&logo=gnometerminal&logoColor=white" alt="Console UI">
+| Authentication | Student workspace |
+|---|---|
+| ![Attend-IQ authentication gateway](docs/assets/auth-gateway.png) | ![Attend-IQ student workspace](docs/assets/student-dashboard.png) |
 
-<br><br>
+| Staff workspace |
+|---|
+| ![Attend-IQ staff workspace](docs/assets/staff-dashboard.png) |
 
-<a href="https://github.com/vishweshwaranbalasundaram/Attend-IQ/actions/workflows/verify.yml"><img src="https://github.com/vishweshwaranbalasundaram/Attend-IQ/actions/workflows/verify.yml/badge.svg" alt="Maven verification"></a>
-
-</div>
-
----
-
-## Quick Navigation
-
-| Start | Understand | Learn | Work on it |
-| :-- | :-- | :-- | :-- |
-| [Quick Start](#quick-start) | [Architecture](#architecture) | [User guide](docs/USER_GUIDE.md) | [Testing](#testing--ci) |
-| [Features](#features) | [Workflows](#workflows) | [Project report](docs/PROJECT_REPORT.md) | [Roadmap](#roadmap) |
-| [Main menu](#main-menu) | [Database ER](#database-er-diagram) | [Viva questions](docs/VIVA_QUESTIONS.md) | [Contributing](#contributing) |
-| [Full setup](#full-setup) | [Attendance policy](#attendance-calculation-policy) | [Demo script](docs/DEMO_SCRIPT.md) | [Limitations](#known-limitations) |
-
----
-
-## Why Attend-IQ?
-
-Manual attendance is slow to reconcile and easy to get wrong: duplicate marks, marks for students who are not enrolled, and no history of corrections. Attend-IQ models the whole workflow in a relational database and **validates the class session and enrollment before saving anything**.
-
-| Goal | How it is done |
-| :-- | :-- |
-| No duplicate attendance | `UNIQUE (session_id, student_id)` in MySQL, also under concurrent attempts |
-| Only enrolled students | Service checks enrollment inside a transaction |
-| Traceable corrections | Audit log for marks, corrections and deletions |
-| Know who is at risk | Percentage, shortage forecast and below-target dashboard |
-| Easy sharing | CSV export for students, attendance, summaries and shortage reports |
-
----
-
-## Quick Start
-
-```bash
-# 1) Clone
-git clone https://github.com/vishweshwaranbalasundaram/Attend-IQ.git
-cd Attend-IQ
-
-# 2) Create the database (run in MySQL Workbench or the mysql client)
-mysql -u root -p < src/main/resources/schema.sql
-
-# 3) Configure (Linux/macOS shell; Windows PowerShell version is in Full Setup)
-export ATTENDIQ_DB_URL='jdbc:mysql://localhost:3306/attendiq_java?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC'
-export ATTENDIQ_DB_USER='root'
-export ATTENDIQ_DB_PASSWORD='YOUR_MYSQL_PASSWORD'
-
-# 4) Test and run
-mvn clean verify
-mvn exec:java
-```
-
-> Never commit your database password. It is read from environment variables only and is never printed.
-
----
+Screenshots were captured from the local demo environment. The staff demo account shown has no assigned courses, so its roster is empty until courses and enrollments are configured.
 
 ## Features
 
-| Module | What you can do |
-| :-- | :-- |
-| ![ST](https://img.shields.io/badge/ST-Students-0891b2?style=flat-square) **Students** | Create, list, view, update, delete (when history permits), search by name or register-number prefix |
-| ![FC](https://img.shields.io/badge/FC-Faculty-7c3aed?style=flat-square) **Faculty** | Create, list, view, update, delete (subject to foreign keys), list assigned subjects |
-| ![SB](https://img.shields.io/badge/SB-Subjects-2563eb?style=flat-square) **Subjects** | Create, list, view, update, delete when enrollment/session history permits |
-| ![EN](https://img.shields.io/badge/EN-Enrollments-db2777?style=flat-square) **Enrollments** | Enroll or remove students, list by student or subject |
-| ![CS](https://img.shields.io/badge/CS-Class_sessions-4f46e5?style=flat-square) **Class sessions** | Create, list, view, update/delete before attendance exists, filter by subject/date range |
-| ![AT](https://img.shields.io/badge/AT-Attendance-059669?style=flat-square) **Attendance** | Mark `PRESENT`, `ABSENT` or `ON_DUTY`; view by session, student or subject/date range |
-| ![BA](https://img.shields.io/badge/BA-Bulk_attendance-d97706?style=flat-square) **Bulk attendance** | Preview roster and proposed marks, skip existing rows, per-row results |
-| ![ED](https://img.shields.io/badge/ED-Corrections-ea580c?style=flat-square) **Corrections** | Correct or delete with a reason and assigned-faculty check; audit event kept |
-| ![RP](https://img.shields.io/badge/RP-Reports-9333ea?style=flat-square) **Reports** | Student/subject percentage, subject summaries, shortage forecast, history filters |
-| ![DB](https://img.shields.io/badge/DB-Dashboard-0e7490?style=flat-square) **Dashboard** | Totals from MySQL, today's roster status, below-target count, recent audit activity |
-| ![CSV](https://img.shields.io/badge/CSV-CSV_export-0f766e?style=flat-square) **CSV export** | Students, filtered attendance, subject summaries, shortage reports (overwrite confirmation) |
-| ![SYS](https://img.shields.io/badge/SYS-Diagnostics-475569?style=flat-square) **Diagnostics** | Test the JDBC connection and view Java/database info without showing credentials |
-| ![UI](https://img.shields.io/badge/UI-Console_UI-be123c?style=flat-square) **Console UI** | ANSI colors (with no-color option), panels, pagination, progress bars |
+- **Institutional authentication:** Firebase Authentication with verified-email and institutional-domain checks, staff/student address-format validation, and Firebase Auth blocking functions.
+- **Role-aware access:** Backend authorization derives identity from verified Firebase ID tokens and resolves the role from server-side account data.
+- **Attendance workflows:** Staff session controls and QR check-in, student attendance views, OD/medical request handling, and audit records.
+- **Anti-proxy controls:** Time-limited rotating QR tokens, server-side geofence checks, GPS accuracy checks, duplicate-scan constraints, and reviewable geofence flags.
+- **Student eligibility tools:** Attendance summaries, eligibility/condonation bands, and safe-skip calculations.
+- **Persistent data:** MySQL schema managed with Flyway migrations; local development can use Docker Compose.
+- **Responsive interface:** Next.js, TypeScript, and a glass-inspired visual system with accessibility fallbacks.
+- **Deployment configuration:** Firebase Hosting and Cloud Run / Cloud SQL configuration are included; cloud resources and secrets remain operator-provisioned.
 
-### Console Preview
+## Technology
 
-> Illustrative terminal mockup with placeholder values, not a screenshot of a live session.
+| Area | Technologies |
+|---|---|
+| Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS |
+| API | Java 25, Spring Boot 3.5, Spring Security, JDBC |
+| Database | MySQL 8.4, Flyway |
+| Identity | Firebase Authentication, Firebase Admin SDK, Firebase Functions |
+| Local development | Docker Compose, Firebase Emulator Suite |
+| Production targets | Firebase Hosting, Cloud Run, Cloud SQL for MySQL |
 
-<p align="center">
-  <img src="docs/assets/console-preview.svg" alt="Illustrative Attend-IQ console layout" width="900">
-</p>
+## Run locally
 
----
+### Prerequisites
 
-## Technology Stack
+- Java 25 and Maven
+- Node.js 22 and npm
+- Docker Desktop with Docker Compose
+- Firebase CLI for emulator workflows
 
-<div align="center">
+### Start the local stack
 
-| Tag | Technology | Role |
-| :-- | :-- | :-- |
-| `[JAVA]` | **Java 25** | Console app, services, domain records, validation, transactions |
-| `[DB]` | **MySQL 8+** | Relational storage, keys, constraints, attendance history |
-| `[JDBC]` | **JDBC / Connector/J 9.4.0** | Prepared statements, transactions, generated keys |
-| `[BUILD]` | **Apache Maven 3.9+** | Build, dependencies, test, run |
-| `[TEST]` | **JUnit 5.11.4** | Unit tests and opt-in MySQL integration test |
-| `[CI]` | **GitHub Actions** | Build and test on push, pull request and manual run |
+1. Copy the example environment file and fill in local-only values. Do not commit credentials or service-account keys.
 
-</div>
+   ```powershell
+   Copy-Item .env.example .env
+   ```
 
-> Badges describe the configured stack, not a measured source-code language percentage.
+2. Start the services:
 
----
+   ```powershell
+   docker compose up --build
+   ```
+
+3. Open the web application at `http://localhost:3000`. With the supplied `.env.example`, the API is available at `http://localhost:8082` and MySQL at `localhost:3308`. Without those overrides, Compose maps MySQL to port `3306`.
+
+The example configuration uses the generic `example.edu` domain and placeholder coordinates. Set `ALLOWED_EMAIL_DOMAIN`, `NEXT_PUBLIC_ALLOWED_EMAIL_DOMAIN`, `CAMPUS_LAT`, and `CAMPUS_LNG` for your deployment. Use the Firebase Emulator Suite for local authentication and Functions testing. Keep `DEV_AUTH_BYPASS` disabled unless you are intentionally running an isolated local test configuration; it must remain disabled in production.
+
+### Run checks without Docker Compose
+
+```powershell
+mvn clean verify
+Push-Location web
+npm ci
+npm run build
+Pop-Location
+```
+
+The backend integration tests require the configured MySQL test database. Run `npm ci` once when setting up the frontend dependencies.
 
 ## Architecture
 
-<p align="center">
-  <img src="docs/assets/architecture.svg" alt="Attend-IQ layered architecture: presentation, service, repository and data layers" width="900">
-</p>
+![Attend-IQ V2 architecture](docs/assets/architecture-v2.svg)
 
-The same design as a dependency diagram:
+The browser uses Firebase Authentication for sign-in and sends Firebase ID tokens to the Spring Boot API. The API verifies tokens with Firebase Admin, performs authorization and attendance operations against MySQL, and serves the frontend's data. Profile media uses Firebase Storage. Local emulator and production deployment details depend on the environment configuration.
 
-```mermaid
-flowchart LR
-    classDef ui fill:#06b6d4,stroke:#0e7490,color:#fff
-    classDef svc fill:#8b5cf6,stroke:#6d28d9,color:#fff
-    classDef repo fill:#f59e0b,stroke:#b45309,color:#fff
-    classDef db fill:#10b981,stroke:#047857,color:#fff
-    classDef misc fill:#64748b,stroke:#334155,color:#fff
+### Core data model
 
-    Operator([Operator]):::misc --> Input[ConsoleInput]:::ui
-    Input --> App[App / Presentation]:::ui
-    App --> UI[ConsoleUI / ConsoleTable / ConsoleStyle]:::ui
-
-    App --> AttendanceService:::svc
-    App --> StudentService:::svc
-    App --> CatalogService[AcademicCatalogService]:::svc
-    App --> FacultyAuthService:::svc
-    App --> Dashboard[DashboardRepository]:::repo
-    App --> CSV[CsvExporter]:::misc
-
-    AttendanceService --> AttendancePort[AttendanceRepository]:::repo
-    StudentService --> StudentPort[StudentRepository]:::repo
-    CatalogService --> CatalogPort[AcademicCatalogRepository]:::repo
-
-    StudentPort -. implemented by .-> StudentJdbc[JdbcAcademicRepository]:::repo
-    CatalogPort -. implemented by .-> CatalogJdbc[JdbcAcademicCatalogRepository]:::repo
-
-    AttendancePort --> JDBC[Prepared SQL / JDBC]:::db
-    StudentJdbc --> JDBC
-    CatalogJdbc --> JDBC
-    Dashboard --> JDBC
-    JDBC --> Database[Database env config]:::db
-    Database --> Connector[MySQL Connector/J]:::db
-    Connector --> MySQL[(MySQL: attendiq_java)]:::db
-```
-
-**Layer rules**
-- **[UI] Presentation** (`App`, console helpers) collects input and renders output.
-- **[SVC] Services** enforce use-case rules and coordinate multi-step transactions.
-- **[REPO] Repositories** define persistence operations; JDBC classes own the SQL.
-- **[DB] Database** reads connection settings from environment variables.
-
----
-
-## Workflows
-
-### Attendance marking
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Operator
-    participant App as Console
-    participant S as AttendanceService
-    participant R as AttendanceRepository
-    participant DB as MySQL
-
-    Operator->>App: Choose session, student and status
-    App->>S: markAttendance(sessionId, studentId, status)
-    S->>DB: BEGIN
-    S->>R: Find session subject
-    R->>DB: SELECT class_sessions
-    DB-->>S: Subject ID or not found
-    S->>R: Verify enrollment
-    R->>DB: SELECT enrollments (with lock)
-    DB-->>S: Enrolled / not enrolled
-    S->>R: Insert attendance + audit row
-    R->>DB: INSERT and SELECT
-    DB-->>S: Saved row or constraint error
-    alt success
-        S->>DB: COMMIT
-        S-->>App: Saved record
-        App-->>Operator: Success message
-    else failure
-        S->>DB: ROLLBACK
-        S-->>App: Error
-        App-->>Operator: Actual error shown
-    end
-```
-
-### Correction / delete flow
-
-```mermaid
-flowchart TD
-    A([Choose correct or delete]):::start --> B[Enter faculty ID and password]
-    B --> C[FacultyAuthService authenticates and audits attempt]
-    C --> D{Authenticated?}
-    D -- No --> X1[Reject operation]:::bad
-    D -- Yes --> E[Enter session, student and reason]
-    E --> F{Session and record exist?}
-    F -- No --> X2[Show not found]:::bad
-    F -- Yes --> G{Faculty assigned to subject?}
-    G -- No --> X3[Reject: not assigned]:::bad
-    G -- Yes --> H[BEGIN transaction]
-    H --> I[Update or delete attendance row]
-    I --> J[Write attendance audit event with reason]
-    J --> K{All steps OK?}
-    K -- Yes --> L[COMMIT]:::ok
-    K -- No --> M[ROLLBACK]:::bad
-    L --> N([Show result]):::start
-    M --> N
-
-    classDef start fill:#3b82f6,stroke:#1d4ed8,color:#fff
-    classDef ok fill:#10b981,stroke:#047857,color:#fff
-    classDef bad fill:#ef4444,stroke:#b91c1c,color:#fff
-```
-
-### Bulk attendance
-
-```mermaid
-flowchart LR
-    A[Pick subject + session]:::a --> B[Load enrolled roster]:::a
-    B --> C[Preview proposed marks]:::b
-    C --> D{Confirm?}
-    D -- No --> Z([Cancel]):::c
-    D -- Yes --> E[Insert each row]:::b
-    E --> F[Skip rows that already exist]:::b
-    F --> G[Per-row result summary]:::d
-
-    classDef a fill:#06b6d4,stroke:#0e7490,color:#fff
-    classDef b fill:#8b5cf6,stroke:#6d28d9,color:#fff
-    classDef c fill:#64748b,stroke:#334155,color:#fff
-    classDef d fill:#10b981,stroke:#047857,color:#fff
-```
-
-### Build and CI pipeline
-
-```mermaid
-flowchart LR
-    P[git push / PR]:::a --> W[GitHub Actions]:::b
-    W --> J[Set up Java 25]:::b
-    J --> M[Start MySQL 8.4 service]:::c
-    M --> S[Load schema-test.sql]:::c
-    S --> V[mvn clean verify]:::d
-    V --> T{Unit tests + MySQL integration test}
-    T -- pass --> OK([PASS]):::ok
-    T -- fail --> NO([FAIL]):::bad
-
-    classDef a fill:#64748b,stroke:#334155,color:#fff
-    classDef b fill:#2088ff,stroke:#1d4ed8,color:#fff
-    classDef c fill:#4479a1,stroke:#1e3a5f,color:#fff
-    classDef d fill:#f59e0b,stroke:#b45309,color:#fff
-    classDef ok fill:#10b981,stroke:#047857,color:#fff
-    classDef bad fill:#ef4444,stroke:#b91c1c,color:#fff
-```
-
-> The workflow file includes a MySQL service so the integration test can run in CI. No remote result is claimed until GitHub records a run.
-
----
-
-## Database ER Diagram
-
+<!-- mermaid-checked: every attribute is `<type> <name> [<key>] ["<description>"]` with at most one of PK/FK/UK, no \n in descriptions, no {} in descriptions, every relationship label is double-quoted -->
 ```mermaid
 erDiagram
-    FACULTY ||--o{ SUBJECTS : teaches
-    STUDENTS ||--o{ ENROLLMENTS : registers
-    SUBJECTS ||--o{ ENROLLMENTS : contains
-    SUBJECTS ||--o{ CLASS_SESSIONS : schedules
-    STUDENTS ||--o{ ATTENDANCE_RECORDS : receives
-    CLASS_SESSIONS ||--o{ ATTENDANCE_RECORDS : records
-    CLASS_SESSIONS ||--o{ ATTENDANCE_AUDIT_LOG : audited
-    STUDENTS ||--o{ ATTENDANCE_AUDIT_LOG : audited
-    FACULTY ||--o{ ATTENDANCE_AUDIT_LOG : claimed_by
-    FACULTY ||--o| LOGIN_ATTEMPTS : lockout_state
-
+    STUDENTS ||--o{ ATTENDANCE_RECORDS : "has attendance"
+    CLASS_SESSIONS ||--o{ ATTENDANCE_RECORDS : "records"
+    FACULTY ||--o{ SUBJECTS : "teaches"
+    SUBJECTS ||--o{ CLASS_SESSIONS : "schedules"
+    STUDENTS }o--o{ SUBJECTS : "enrolls through enrollments"
+    CLASS_SESSIONS ||--o| QR_SESSIONS : "may use"
+    QR_SESSIONS ||--o{ QR_TOKENS : "rotates"
+    STUDENTS ||--o{ ON_DUTY_REQUESTS : "submits"
+    FACULTY o|--o{ ON_DUTY_REQUESTS : "reviews"
+    CLASS_SESSIONS ||--o{ GEOFENCE_REVIEW_FLAGS : "may flag"
+    STUDENTS ||--o{ GEOFENCE_REVIEW_FLAGS : "may trigger"
+    CLASS_SESSIONS ||--o{ ATTENDANCE_AUDIT_LOGS : "has audit events"
+    STUDENTS ||--o{ ATTENDANCE_AUDIT_LOGS : "has audit events"
+    STUDENTS {
+        bigint student_id PK
+        varchar email UK
+        varchar register_number UK
+    }
     FACULTY {
-        BIGINT faculty_id PK
-        VARCHAR full_name
-        VARCHAR email UK
-        VARCHAR password_hash "V4, nullable"
+        bigint faculty_id PK
+        varchar email UK
     }
     SUBJECTS {
-        BIGINT subject_id PK
-        VARCHAR subject_code UK
-        VARCHAR subject_name
-        BIGINT faculty_id FK
-    }
-    STUDENTS {
-        BIGINT student_id PK
-        VARCHAR register_number UK
-        VARCHAR full_name
-        VARCHAR email UK
-    }
-    ENROLLMENTS {
-        BIGINT student_id PK,FK
-        BIGINT subject_id PK,FK
-        TIMESTAMP enrolled_at
+        bigint subject_id PK
+        bigint faculty_id FK
+        varchar subject_code UK
     }
     CLASS_SESSIONS {
-        BIGINT session_id PK
-        BIGINT subject_id FK
-        DATE class_date
-        TINYINT period_number
+        bigint session_id PK
+        bigint subject_id FK
+        date session_date
     }
     ATTENDANCE_RECORDS {
-        BIGINT attendance_id PK
-        BIGINT session_id FK
-        BIGINT student_id FK
-        ENUM status
-        TIMESTAMP marked_at
+        bigint attendance_id PK
+        bigint session_id FK
+        bigint student_id FK
+        varchar status
     }
-    ATTENDANCE_AUDIT_LOG {
-        BIGINT audit_id PK
-        BIGINT session_id FK
-        BIGINT student_id FK
-        ENUM event_type
-        ENUM previous_status
-        ENUM new_status
-        VARCHAR reason
-        BIGINT claimed_faculty_id FK
+    QR_SESSIONS {
+        bigint qr_session_id PK
+        bigint session_id FK
+        datetime expires_at
     }
-    LOGIN_ATTEMPTS {
-        BIGINT faculty_id PK,FK
-        INT failed_attempts
-        TIMESTAMP locked_until
+    QR_TOKENS {
+        bigint qr_token_id PK
+        bigint qr_session_id FK
+        varchar token_hash UK
     }
-    FACULTY_AUTH_AUDIT_LOG {
-        BIGINT audit_id PK
-        BIGINT attempted_faculty_id
-        ENUM event_type
-        TIMESTAMP recorded_at
+    ON_DUTY_REQUESTS {
+        bigint request_id PK
+        bigint student_id FK
+        varchar status
+    }
+    GEOFENCE_REVIEW_FLAGS {
+        bigint flag_id PK
+        bigint session_id FK
+        bigint student_id FK
+    }
+    ATTENDANCE_AUDIT_LOGS {
+        bigint audit_id PK
+        bigint attendance_id FK
+        varchar actor_email
     }
 ```
 
-`ENROLLMENTS` has a composite `(student_id, subject_id)` key. Sessions are unique per subject/date/period; attendance is unique per session/student. `FACULTY_AUTH_AUDIT_LOG` deliberately has no foreign key so failed attempts for unknown faculty IDs can be recorded. Full details: [DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md).
+The diagram is a high-level view; see the migration scripts and database documentation for the authoritative columns and constraints.
 
----
+## Deployment
 
-## Database Integrity and Security
-
-| Protection | Detail |
-| :-- | :-- |
-| SQL injection | Values bound with `PreparedStatement`; resources closed with try-with-resources |
-| Integrity | Primary/foreign/composite keys, unique identifiers, schedule and attendance uniqueness |
-| Transactions | Marking and audited corrections/deletions commit or roll back as one unit |
-| Safe deletes | Enrollment and attendance history blocks unsafe deletion; the app never drops or resets data |
-| Credentials | `ATTENDIQ_DB_URL`, `ATTENDIQ_DB_USER`, `ATTENDIQ_DB_PASSWORD`; password never printed |
-| Password hashing (new) | `PasswordHasher`: PBKDF2-HMAC-SHA256, 210,000 iterations, random salt, constant-time compare |
-| Audit | Attendance changes use V3; password-free login success/failure/lockout events use V5 |
-
-> Attendance correction and deletion now require the assigned faculty ID and a verified password. Passwords are salted PBKDF2 hashes; login failures are rate-limited and recorded without passwords.
-
----
-
-## Project Structure
-
-```text
-Attend-IQ/
-|-- .github/workflows/verify.yml      # CI: Java 25 + MySQL service + mvn verify
-|-- database/migrations/              # V2 search index through V5 login security
-|-- docs/                             # architecture, schema, user, testing, report, viva
-|   \-- assets/                       # banner, console preview, architecture SVG
-|-- src/main/java/com/attendiq/       # console, services, domain, JDBC repositories
-|-- src/main/resources/schema.sql     # fresh-install schema + demo rows
-|-- src/test/java/com/attendiq/       # unit tests + opt-in MySQL integration test
-|-- src/test/resources/schema-test.sql
-|-- pom.xml
-\-- README.md
-```
-
----
-
-## Full Setup
-
-**Prerequisites:** JDK 25+, Apache Maven 3.9+, MySQL 8+, MySQL Workbench (optional).
-
-<details>
-<summary><b>1. Prepare the database</b></summary>
-
-For a fresh database, execute `src/main/resources/schema.sql`. It creates `attendiq_java`, the tables, migration tracking and optional demo rows using `CREATE TABLE IF NOT EXISTS` and `INSERT IGNORE`. It does not drop tables or reset rows.
-
-For an existing database, **back it up first**, then apply in order:
-
-1. `database/migrations/V2__student_name_search_index.sql`
-2. `database/migrations/V3__attendance_audit_log.sql`
-3. `database/migrations/V4__faculty_password_hash.sql`
-4. `database/migrations/V5__faculty_login_lockout_and_audit.sql`
-
-The System menu never runs migrations automatically.
-</details>
-
-<details>
-<summary><b>2. Configure (Windows PowerShell)</b></summary>
-
-```powershell
-Set-Location "$HOME\Downloads\AttendIQ-java-attendance-starter\java-attendance"
-$env:JAVA_HOME = 'C:\Program Files\Java\jdk-25.0.4.1'
-$env:Path = "$env:JAVA_HOME\bin;$HOME\.maven\maven-3.9.15\bin;$env:Path"
-
-$env:ATTENDIQ_DB_URL = 'jdbc:mysql://localhost:3306/attendiq_java?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC'
-$env:ATTENDIQ_DB_USER = 'root'
-$env:ATTENDIQ_DB_PASSWORD = 'YOUR_MYSQL_PASSWORD'
-$env:ATTENDIQ_ATTENDANCE_TARGET = '75'
-$env:ATTENDIQ_COLOR = 'always'   # 'never' for plain output; omit for auto
-```
-
-`allowPublicKeyRetrieval=true` is for local development. Prefer TLS with certificate verification for remote or production databases. Variables apply only to the current PowerShell session.
-</details>
-
-<details>
-<summary><b>3. Environment variables</b></summary>
-
-| Variable | Purpose | Default |
-| :-- | :-- | :-- |
-| `ATTENDIQ_DB_URL` | JDBC URL | `jdbc:mysql://localhost:3306/attendiq_java?useSSL=false&serverTimezone=UTC` |
-| `ATTENDIQ_DB_USER` | MySQL user | `root` |
-| `ATTENDIQ_DB_PASSWORD` | MySQL password | empty |
-| `ATTENDIQ_ATTENDANCE_TARGET` | Target percentage, integer 1 to 100 | `75` |
-| `ATTENDIQ_COLOR` | `always` / `never` (also honors `NO_COLOR=1`) | auto |
-| `ATTENDIQ_RUN_MYSQL_IT` | `true` enables the MySQL integration test | off |
-</details>
-
-```powershell
-mvn clean verify     # compile + run the default test suite
-mvn exec:java        # start com.attendiq.App
-```
-
----
-
-## Main Menu
-
-| Key | Module | Key | Module |
-| :-: | :-- | :-: | :-- |
-| `1` | ![DB](https://img.shields.io/badge/DB-0e7490?style=flat-square) Dashboard and quick actions | `7` | ![AT](https://img.shields.io/badge/AT-059669?style=flat-square) Attendance (bulk marking, correction) |
-| `2` | ![ST](https://img.shields.io/badge/ST-0891b2?style=flat-square) Student Management | `8` | ![RP](https://img.shields.io/badge/RP-9333ea?style=flat-square) Reports & Analytics |
-| `3` | ![FC](https://img.shields.io/badge/FC-7c3aed?style=flat-square) Faculty Management | `9` | ![CSV](https://img.shields.io/badge/CSV-0f766e?style=flat-square) CSV exports |
-| `4` | ![SB](https://img.shields.io/badge/SB-2563eb?style=flat-square) Subject Management | `10` | ![SYS](https://img.shields.io/badge/SYS-475569?style=flat-square) System & Database diagnostics |
-| `5` | ![EN](https://img.shields.io/badge/EN-db2777?style=flat-square) Enrollment Management | `11` | ![HELP](https://img.shields.io/badge/HELP-Shortcuts-334155?style=flat-square) Help & Shortcuts |
-| `6` | ![CS](https://img.shields.io/badge/CS-4f46e5?style=flat-square) Class Session Management | `0` | ![EXIT](https://img.shields.io/badge/EXIT-b91c1c?style=flat-square) Exit (`12` also accepted) |
-
-Submenus use `0` to go back. Tables show 12 rows per page: press Enter for the next page or `q` to stop.
-
----
-
-## Attendance Calculation Policy
-
-`PRESENT` and `ON_DUTY` count as attended. `ABSENT` and **unmarked** scheduled sessions do not count, and unmarked sessions stay in the denominator.
-
-```text
-percentage = 100 × (present + on-duty) / scheduled sessions
-```
-
-- No scheduled sessions → `0%` with an explanation.
-- **Shortage forecast:** the smallest `x` where `(attended + x) / (scheduled + x) ≥ target / 100`. If the target is 100% and an absence already exists, it is unreachable.
-- **Dashboard:** totals come from MySQL. Today's rate = attended marks ÷ roster expected today. Below-target counts enrolled student/subject pairs under the threshold.
-
----
-
-## Testing & CI
-
-| Covered | Notes |
-| :-- | :-- |
-| Service validation, attendance calculations | Unit tests |
-| Console input and rendering, CSV escaping/overwrite, bulk results | Unit tests |
-| Password hashing and fake-clock lockout policy | Unit tests |
-| MySQL persistence and faculty authentication | Opt-in `AttendanceMySqlIntegrationTest` and `FacultyAuthServiceIntegrationTest` |
-
-**Local result (2026-10-20):** `mvn clean verify` with MySQL 8.4 and `ATTENDIQ_RUN_MYSQL_IT=true` completed 45 tests, 0 failures, 0 errors, 0 skipped. JaCoCo reported 92.7% aggregate line coverage across service classes. This is a local result; GitHub Actions has not yet been run.
-
-The MySQL integration tests require a dedicated database whose name ends with `_test`, created from `src/test/resources/schema-test.sql`. Never point them at a personal or production database.
-
----
-
-## Roadmap
-
-| Status | Item |
-| :-: | :-- |
-| DONE | Console CRUD, attendance, bulk marking, corrections, audit, reports, CSV export |
-| DONE | PBKDF2 `PasswordHasher`, `FacultyAuthService`, V4 `password_hash` column |
-| DONE | CI workflow with MySQL service for the integration test |
-| DONE | Wire faculty password login into `App` for correction/delete |
-| DONE | Set/change faculty password menu option |
-| DONE | Login attempt tracking and temporary lockout (V5) |
-| DONE | JaCoCo report and 70% service coverage target in CI |
-| DONE | `docker-compose.yml` with MySQL only and schema initialization |
-
----
-
-## Known Limitations
-
-- The console uses local faculty passwords, not a centralized identity provider.
-- Login attempts are audited separately; catalog changes and failed attendance authorization attempts are not audited.
-- Local integration tests need a separate `_test` database; CI creates one automatically.
-- Local console program only: no hosted service, web API or frontend.
-- No automatic schema migration runner; apply migrations manually after a backup.
-
----
-
-## Learning Outcomes
-
-| Area | What it demonstrates |
-| :-- | :-- |
-| **OOP** | Encapsulation and composition in services, repository interfaces with polymorphic implementations, records and enums |
-| **DBMS** | Normalized relations, primary/foreign/composite keys, uniqueness, referential integrity |
-| **JDBC** | Connections, prepared statements, result sets, generated keys, commit and rollback |
-| **Design** | Layered responsibilities, validation, exception handling, testable services, database-backed reports |
-
----
+The repository includes configuration for Firebase Hosting, Cloud Run, and Cloud SQL for MySQL. Before deploying, provision the cloud resources, configure Firebase project identifiers and secrets, set the production database connection, and ensure the authentication bypass is disabled. Cloud resources are not provisioned by this repository.
 
 ## Documentation
 
-[Architecture](docs/ARCHITECTURE.md) · [Database schema](docs/DATABASE_SCHEMA.md) · [User guide](docs/USER_GUIDE.md) · [Testing](docs/TESTING.md) · [Project report](docs/PROJECT_REPORT.md) · [Demo script](docs/DEMO_SCRIPT.md) · [Viva questions](docs/VIVA_QUESTIONS.md)
+- [Application architecture](docs/ARCHITECTURE.md)
+- [Database schema and migrations](docs/DATABASE_SCHEMA.md)
+- [Testing notes](docs/TESTING.md)
+- [Detailed architecture diagrams](.github/modernize/assessment/engines/facts/architecture-diagram.md)
+- [Data architecture and persistence](.github/modernize/assessment/engines/facts/data-architecture.md)
 
----
+## Security notes
 
-## Contributing
-
-Create a focused branch, keep the console/JDBC/MySQL architecture, update docs when behavior changes, and run `mvn clean verify` before a pull request. Do not commit credentials, personal attendance data, generated exports, or changes that reset a development database.
-
-## License
-
-No license file is currently present, so no open-source license is claimed.
-
-## Acknowledgements
-
-Apache Maven, MySQL Connector/J and JUnit 5. Versions are maintained in `pom.xml`.
-
-<div align="center">
-
-**Built by [Vishweshwaran](https://github.com/vishweshwaranbalasundaram)** · Java | JDBC | MySQL
-
-</div>
+- Never commit `.env` files, Firebase service-account credentials, signing keys, or production secrets.
+- Production requests must use verified Firebase ID tokens; client-provided role claims are not authoritative.
+- Use the Firebase Emulator Suite for local identity testing and keep development bypasses disabled in production.
+- Configure and review the allowed institutional domain and account-format rules for your deployment.

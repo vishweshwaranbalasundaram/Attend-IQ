@@ -1,14 +1,15 @@
 package com.attendiq;
 
 public enum AttendanceStatus {
-    PRESENT, ABSENT, ON_DUTY;
+    PRESENT, LATE, ABSENT, ON_DUTY;
 
     public static AttendanceStatus fromMenuChoice(int choice) {
         return switch (choice) {
             case 1 -> PRESENT;
             case 2 -> ABSENT;
             case 3 -> ON_DUTY;
-            default -> throw new IllegalArgumentException("Choose 1, 2, or 3.");
+            case 4 -> LATE;
+            default -> throw new IllegalArgumentException("Choose a status from 1 to 4.");
         };
     }
 }

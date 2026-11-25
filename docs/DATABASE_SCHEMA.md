@@ -1,51 +1,53 @@
-# Attend-IQ Database Schema
+# Attend-IQ V2 Database Schema
 
-## Database and Tables
+Attend-IQ uses MySQL 8 for both the original CLI and web portal. Flyway migrations in `src/main/resources/db/migration/` are the authoritative schema history; the web application uses JDBC and `JdbcTemplate`, not ORM-generated DDL.
 
-Attend-IQ connects to the MySQL database `attendiq_java` by default. SQL values are supplied through `PreparedStatement` parameters.
+## Schema and migrations
+
+| Migration | Purpose |
+|---|---|
+| `V1__initial_schema.sql` | Academic catalog, students, faculty, enrollments, sessions, attendance, legacy audit and login tables |
+| `V2__local_demo_seed.sql` | Local academic and demo seed rows |
+| `V3__portal_profiles_and_auth.sql` | Profile fields and OTP authentication records |
+| `V4__demo_portal_accounts_and_attendance.sql` | Local portal account and attendance demo data |
+| `V5__firebase_qr_and_od.sql` | QR sessions and token hashes, portal audit events, and OD/medical requests |
+| `V6__geofence_review_flags.sql` | Review queue for geofence-related attendance flags |
+
+The standard Flyway lifecycle applies pending migrations at application startup. `V2` and `V4` contain demo-oriented data; do not treat their sample rows as production accounts.
+
+## Table catalog
 
 | Table | Purpose |
-| --- | --- |
-| `students` | Student identity and unique registration number |
-| `faculty` | Faculty identity, email, and nullable PBKDF2 password hash |
-| `subjects` | Subject identity and assigned faculty |
-| `enrollments` | Student/subject many-to-many relationship |
-| `class_sessions` | Dated class meetings by subject and period |
-| `attendance_records` | One status per student/session |
-| `attendance_audit_log` | Successful attendance marks, corrections, and deletions |
-| `login_attempts` | Failed-login counter and temporary lock expiry per faculty account |
-| `faculty_auth_audit_log` | Successful, failed, and locked login events; stores no password or hash |
-| `schema_migrations` | Manually applied schema version history |
+|---|---|
+| `students` | Student identity, registration number, program, semester and cohort |
+| `faculty` | Staff identity and legacy password-hash field |
+| `subjects` | Courses and assigned faculty |
+| `enrollments` | Student-to-subject association |
+| `class_sessions` | Dated class meetings, period and subject |
+| `attendance_records` | One attendance status per student and class session |
+| `attendance_audit_log` | Legacy attendance mark, correction and deletion events |
+| `attendance_audit_logs` | Portal audit entries with actor email, reason and IP address |
+| `attendance_qr_sessions` | Timed QR session settings and closure timestamps |
+| `attendance_qr_tokens` | Rotating token bucket, hash and expiry; raw QR tokens are not stored |
+| `on_duty_requests` | OD and medical requests and staff review state |
+| `attendance_geofence_flags` | Geofence review flags, distance, accuracy and review state |
+| `auth_otp` | Email, role, OTP hash, expiry and failed-attempt count |
+| `login_attempts` | Legacy faculty login lockout state |
+| `faculty_auth_audit_log` | Legacy password-free faculty login events |
 
-`faculty_auth_audit_log.attempted_faculty_id` also records unknown IDs, so it intentionally has no foreign key. `login_attempts.faculty_id` references `faculty` and is deleted with the faculty row.
+## Integrity and transaction notes
 
-## Attendance Rules
+- Primary keys identify rows; unique keys prevent duplicate registration numbers, emails, enrollments, class periods, attendance entries, QR token hashes, and repeated token buckets within a QR session.
+- Foreign keys connect students, faculty, courses, enrollments, sessions, attendance, QR sessions, OD requests, and geofence flags.
+- Attendance percentage calculations treat `PRESENT`, `LATE`, and `ON_DUTY` as attended statuses.
+- The portal uses Spring-managed transactions for multi-write attendance and workflow operations. The console repository also owns explicit JDBC transactions for attendance writes.
+- `attendance_audit_log` is the legacy CLI audit table. `attendance_audit_logs` is the portal audit table; both are queried by the student audit view.
+- The application has no configured application-level cache.
 
-- Unique keys prevent duplicate enrollment, subject/date/period sessions, and attendance per student/session.
-- Foreign keys preserve relationships. History protects attendance, enrollment, and session records from unsafe deletion.
-- Attendance updates/deletes and their audit rows commit in one transaction.
-- Corrections and deletions require a matching faculty password and the existing service check that the faculty member is assigned to the session.
-- Login attempt state is updated transactionally with a password-free authentication audit event. Five consecutive failed attempts lock the account for five minutes; success clears the counter.
+## Setup and operations
 
-Attendance percentage is `100 * (PRESENT + ON_DUTY) / scheduled sessions`, counting sessions from enrollment through today. Unmarked sessions count in the denominator. Zero scheduled sessions returns 0%.
+Local development uses the MySQL service from Docker Compose. Production configuration targets MySQL on Cloud SQL through the Cloud SQL Connector. Configure connection credentials and project identifiers through the environment; do not commit local `.env` files or cloud credentials.
 
-## Fresh Setup
+The `.sql` files under `src/main/resources/db/migration/` are managed by Flyway. Avoid manually applying them to a live database outside a planned migration procedure. Back up the database and test upgrades against a disposable copy before production rollout.
 
-1. Execute `src/main/resources/schema.sql` in MySQL Workbench, or start MySQL through `docker compose up -d mysql` as described in [TESTING.md](TESTING.md).
-2. Set the JDBC URL, username, and password in local environment variables.
-3. Verify database connectivity from the application.
-
-The baseline schema includes the latest V1–V5 tables and optional demo rows. It uses `CREATE TABLE IF NOT EXISTS` and `INSERT IGNORE`; it does not drop or reset data.
-
-## Existing Database Migration
-
-Back up the database, then apply missing migrations in order. A V1 database needs V2, V3, V4, and V5:
-
-1. `database/migrations/V2__student_name_search_index.sql`
-2. `database/migrations/V3__attendance_audit_log.sql`
-3. `database/migrations/V4__faculty_password_hash.sql`
-4. `database/migrations/V5__faculty_login_lockout_and_audit.sql`
-
-The application does not run migrations automatically. Apply V5 only after V4 has added `faculty.password_hash`. Existing rows retain a null password hash until a trusted administrator provisions them. New faculty set a password during creation. The initial-password setup menu for an existing null-hash account is disabled unless `ATTENDIQ_ALLOW_INITIAL_PASSWORD_SETUP=true` is set in a trusted setup session.
-
-The authentication audit table stores only the attempted faculty ID, event type, and timestamp. Passwords and password hashes are never written to it.
+See [the detailed entity model and database configuration](../.github/modernize/assessment/engines/facts/data-architecture.md).

@@ -522,7 +522,7 @@ public class JdbcAcademicCatalogRepository implements AcademicCatalogRepository 
     public List<ShortageReport> shortageReports(int targetPercentage) throws SQLException {
         String sql = "SELECT st.student_id, st.register_number, st.full_name, s.subject_id, "
                 + "s.subject_code, s.subject_name, COUNT(cs.session_id) AS total_sessions, "
-                + "COALESCE(SUM(CASE WHEN ar.status IN ('PRESENT', 'ON_DUTY') "
+                + "COALESCE(SUM(CASE WHEN ar.status IN ('PRESENT', 'LATE', 'ON_DUTY') "
                 + "THEN 1 ELSE 0 END), 0) AS attended_sessions "
                 + "FROM enrollments e "
                 + "JOIN students st ON st.student_id = e.student_id "
@@ -533,7 +533,7 @@ public class JdbcAcademicCatalogRepository implements AcademicCatalogRepository 
                 + "AND ar.student_id = e.student_id "
                 + "GROUP BY st.student_id, st.register_number, st.full_name, "
                 + "s.subject_id, s.subject_code, s.subject_name "
-                + "HAVING 100.0 * SUM(CASE WHEN ar.status IN ('PRESENT', 'ON_DUTY') "
+                + "HAVING 100.0 * SUM(CASE WHEN ar.status IN ('PRESENT', 'LATE', 'ON_DUTY') "
                 + "THEN 1 ELSE 0 END) / COUNT(cs.session_id) < ? "
                 + "ORDER BY s.subject_code, st.register_number";
         try (Connection connection = Database.getConnection();

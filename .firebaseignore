@@ -1,0 +1,5 @@
+web/node_modules/
+web/.next/
+web/out/
+functions/node_modules/
+functions/lib/

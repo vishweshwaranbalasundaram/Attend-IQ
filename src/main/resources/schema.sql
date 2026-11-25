@@ -118,10 +118,10 @@ INSERT IGNORE INTO schema_migrations (version, description) VALUES
 
 -- Optional demo records. Run once after creating the schema.
 INSERT IGNORE INTO faculty (faculty_id, full_name, email)
-VALUES (1, 'Demo Faculty', 'faculty@example.edu');
+VALUES (1, 'Demo Faculty', 'demo.faculty@attendiq.edu');
 
 INSERT IGNORE INTO students (student_id, register_number, full_name, email)
-VALUES (1, 'REC26CS001', 'Demo Student', 'student@example.edu');
+VALUES (1, 'DEMO001', 'Demo Student', 'demo.student@attendiq.edu');
 
 INSERT IGNORE INTO subjects (subject_id, subject_code, subject_name, faculty_id)
 VALUES (1, 'CS23333', 'Object Oriented Programming', 1);

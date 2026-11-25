@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1480" height="820" viewBox="0 0 1480 820" role="img" aria-labelledby="title description">
+  <title id="title">Attend-IQ V2 system architecture</title>
+  <desc id="description">Browser, Firebase identity, Spring Boot API, and MySQL deployment architecture.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#11221b"/>
+      <stop offset="1" stop-color="#1f4032"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#d9c2a0"/>
+      <stop offset="1" stop-color="#a8c8a9"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10z" fill="#d9c2a0"/>
+    </marker>
+    <style>
+      .title { font: 700 30px 'Segoe UI', Arial, sans-serif; fill: #f8f6ef; }
+      .subtitle { font: 15px 'Segoe UI', Arial, sans-serif; fill: #c5d5c8; }
+      .cardtitle { font: 700 15px 'Segoe UI', Arial, sans-serif; fill: #e7d4b8; letter-spacing: 2px; }
+      .heading { font: 700 21px 'Segoe UI', Arial, sans-serif; fill: #f8f6ef; }
+      .body { font: 15px 'Segoe UI', Arial, sans-serif; fill: #d7e3d8; }
+      .small { font: 12px 'Segoe UI', Arial, sans-serif; fill: #bdd0c2; }
+      .flow { font: 700 12px 'Segoe UI', Arial, sans-serif; fill: #f3e5cd; }
+    </style>
+  </defs>
+  <rect width="1480" height="820" rx="24" fill="url(#background)"/>
+  <circle cx="1330" cy="80" r="250" fill="#ffffff" opacity=".025"/>
+  <text x="64" y="64" class="title">Attend-IQ V2 | System Architecture</text>
+  <text x="64" y="94" class="subtitle">One attendance platform with verified identity, server-side decisions, and MySQL-backed records.</text>
+
+  <g fill="#203a2e" stroke="#78927d" stroke-width="1.5">
+    <rect x="60" y="145" width="380" height="255" rx="18"/>
+    <rect x="550" y="145" width="380" height="255" rx="18"/>
+    <rect x="1040" y="145" width="380" height="255" rx="18"/>
+    <rect x="550" y="500" width="380" height="210" rx="18"/>
+    <rect x="1040" y="500" width="380" height="210" rx="18"/>
+  </g>
+  <g>
+    <text x="88" y="184" class="cardtitle">PRESENTATION</text>
+    <text x="88" y="225" class="heading">Student and staff browser</text>
+    <text x="88" y="265" class="body">Next.js 15  /  React 19  /  TypeScript</text>
+    <text x="88" y="300" class="body">Eligibility compass and course views</text>
+    <text x="88" y="333" class="body">QR scan, profile, requests, staff tools</text>
+    <text x="88" y="370" class="small">Firebase web SDK sends verified ID tokens</text>
+
+    <text x="578" y="184" class="cardtitle">IDENTITY AND PROFILE</text>
+    <text x="578" y="225" class="heading">Firebase Auth</text>
+    <text x="578" y="265" class="body">Email verification and Google sign-in</text>
+    <text x="578" y="300" class="body">Blocking Functions check domain and role format</text>
+    <text x="578" y="335" class="body">Storage rules protect user avatar paths</text>
+
+    <text x="1068" y="184" class="cardtitle">APPLICATION API</text>
+    <text x="1068" y="225" class="heading">Spring Boot REST API</text>
+    <text x="1068" y="265" class="body">Java 25  /  Spring Security</text>
+    <text x="1068" y="300" class="body">Admin SDK verifies Firebase ID tokens</text>
+    <text x="1068" y="335" class="body">Database role mapping and scoped access</text>
+    <text x="1068" y="370" class="body">Attendance, QR, geofence, OD workflows</text>
+    <text x="1068" y="390" class="small">Analytics, audit and exports</text>
+
+    <text x="578" y="540" class="cardtitle">PROFILE STORAGE AND DELIVERY</text>
+    <text x="578" y="582" class="heading">Firebase Storage and hosting</text>
+    <text x="578" y="620" class="body">Storage rules protect avatar paths</text>
+    <text x="578" y="653" class="body">Firebase Hosting and Cloud Run targets</text>
+    <text x="578" y="682" class="small">Local emulators; cloud resources provisioned separately</text>
+
+    <text x="1068" y="540" class="cardtitle">PERSISTENCE</text>
+    <text x="1068" y="582" class="heading">MySQL 8</text>
+    <text x="1068" y="620" class="body">JDBC and JdbcTemplate data access</text>
+    <text x="1068" y="653" class="body">Flyway versioned migrations</text>
+    <text x="1068" y="682" class="small">Local container or Cloud SQL Connector</text>
+  </g>
+
+  <g fill="none" stroke="url(#accent)" stroke-width="2.5" marker-end="url(#arrow)">
+    <path d="M440 235H540"/>
+    <path d="M550 300H440"/>
+    <path d="M440 345C620 470 850 470 1030 345"/>
+    <path d="M410 400C440 485 500 540 550 565"/>
+    <path d="M1230 410V490"/>
+  </g>
+  <g class="flow" text-anchor="middle">
+    <text x="490" y="220">sign-in</text>
+    <text x="490" y="288">ID token</text>
+    <text x="740" y="455">REST bearer token</text>
+    <text x="480" y="492">avatar upload</text>
+    <text x="1250" y="465">SQL and transactions</text>
+  </g>
+  <rect x="60" y="754" width="1360" height="2" fill="#78927d" opacity=".55"/>
+  <text x="60" y="786" class="small">Trust boundary: roles are resolved from verified identity and the database, never from client-supplied role headers.</text>
+</svg>

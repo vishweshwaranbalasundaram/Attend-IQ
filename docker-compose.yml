@@ -3,17 +3,99 @@ services:
     image: mysql:8.4
     environment:
       MYSQL_DATABASE: attendiq_java
-      MYSQL_ROOT_PASSWORD: ${ATTENDIQ_DB_PASSWORD:?Set ATTENDIQ_DB_PASSWORD before starting MySQL}
+      MYSQL_ROOT_PASSWORD: ${ATTENDIQ_MYSQL_ROOT_PASSWORD:?Set ATTENDIQ_MYSQL_ROOT_PASSWORD in .env}
     ports:
       - "${ATTENDIQ_MYSQL_PORT:-3306}:3306"
     volumes:
       - attendiq_mysql_data:/var/lib/mysql
-      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-attendiq-schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -p\"$${MYSQL_ROOT_PASSWORD}\""]
       interval: 10s
       timeout: 5s
       retries: 12
+
+  auth-emulator:
+    image: node:22-alpine
+    working_dir: /workspace
+    environment:
+      FUNCTIONS_DISCOVERY_TIMEOUT: 30
+    command: >-
+      sh -c "npm install --global firebase-tools@14 &&
+      npm install --prefix functions &&
+      npm --prefix functions run build &&
+      firebase emulators:start --only auth,functions --project demo-attendiq --config firebase.emulator.json"
+    ports:
+      - "9099:9099"
+      - "5001:5001"
+      - "4000:4000"
+    volumes:
+      - .:/workspace
+
+  storage-emulator:
+    build:
+      context: .
+      dockerfile: StorageEmulator.Dockerfile
+    working_dir: /workspace
+    environment:
+      FIREBASE_AUTH_EMULATOR_HOST: auth-emulator:9099
+    ports:
+      - "9199:9199"
+    volumes:
+      - .:/workspace
+    depends_on:
+      - auth-emulator
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      PORT: 8080
+      SPRING_PROFILES_ACTIVE: local
+      ATTENDIQ_DB_URL: ${ATTENDIQ_DB_URL:-jdbc:mysql://mysql:3306/attendiq_java?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+      ATTENDIQ_DB_USER: ${ATTENDIQ_DB_USER:-root}
+      ATTENDIQ_DB_PASSWORD: ${ATTENDIQ_DB_PASSWORD:?Set ATTENDIQ_DB_PASSWORD in .env}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-demo-attendiq}
+      FIREBASE_AUTH_EMULATOR_HOST: auth-emulator:9099
+      DEV_AUTH_BYPASS: "false"
+      ATTENDIQ_WEB_ALLOWED_ORIGINS: ${ATTENDIQ_WEB_ALLOWED_ORIGINS:-http://localhost:3000}
+      ALLOWED_EMAIL_DOMAIN: ${ALLOWED_EMAIL_DOMAIN:-example.edu}
+      ATTENDIQ_QR_HMAC_SECRET: ${ATTENDIQ_QR_HMAC_SECRET:-replace-this-local-example-with-at-least-32-random-bytes}
+      CAMPUS_LAT: ${CAMPUS_LAT:-0.0000}
+      CAMPUS_LNG: ${CAMPUS_LNG:-0.0000}
+      GEOFENCE_RADIUS_METERS: ${GEOFENCE_RADIUS_METERS:-150}
+      MAX_GPS_ACCURACY_METERS: ${MAX_GPS_ACCURACY_METERS:-50}
+      ATTENDIQ_SESSION_MINUTES: ${ATTENDIQ_SESSION_MINUTES:-10}
+      ATTENDIQ_GRACE_MINUTES: ${ATTENDIQ_GRACE_MINUTES:-5}
+      ATTENDIQ_LATE_CUTOFF_MINUTES: ${ATTENDIQ_LATE_CUTOFF_MINUTES:-10}
+    ports:
+      - "${ATTENDIQ_API_PORT:-8082}:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      auth-emulator:
+        condition: service_started
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:${ATTENDIQ_API_PORT:-8082}/api
+      NEXT_PUBLIC_FIREBASE_API_KEY: ${NEXT_PUBLIC_FIREBASE_API_KEY:-demo-api-key}
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:-localhost}
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${NEXT_PUBLIC_FIREBASE_PROJECT_ID:-demo-attendiq}
+      NEXT_PUBLIC_FIREBASE_APP_ID: ${NEXT_PUBLIC_FIREBASE_APP_ID:-demo-app-id}
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET:-demo-attendiq.appspot.com}
+      NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST: http://localhost:9099
+      NEXT_PUBLIC_FIREBASE_STORAGE_EMULATOR_HOST: http://localhost:9199
+      NEXT_PUBLIC_ALLOWED_EMAIL_DOMAIN: ${NEXT_PUBLIC_ALLOWED_EMAIL_DOMAIN:-example.edu}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+      - auth-emulator
+      - storage-emulator
 
 volumes:
   attendiq_mysql_data:

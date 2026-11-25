@@ -1,0 +1,23 @@
+{
+  "name": "attendiq-auth-functions",
+  "private": true,
+  "engines": {
+    "node": "22"
+  },
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "emulate": "firebase emulators:start --only auth,functions --project demo-attendiq",
+    "deploy": "firebase deploy --only functions"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.4.0",
+    "firebase-functions": "^6.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
+  }
+}
