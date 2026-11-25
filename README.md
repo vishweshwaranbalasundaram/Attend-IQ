@@ -80,7 +80,7 @@ Screenshots were captured from the local demo environment. The staff demo accoun
 
 3. Open the web application at `http://localhost:3000`. With the supplied `.env.example`, the API is available at `http://localhost:8082` and MySQL at `localhost:3308`. Without those overrides, Compose maps MySQL to port `3306`.
 
-The example configuration uses the generic `example.edu` domain and placeholder coordinates. Set `ALLOWED_EMAIL_DOMAIN`, `NEXT_PUBLIC_ALLOWED_EMAIL_DOMAIN`, `CAMPUS_LAT`, and `CAMPUS_LNG` for your deployment. Use the Firebase Emulator Suite for local authentication and Functions testing. Keep `DEV_AUTH_BYPASS` disabled unless you are intentionally running an isolated local test configuration; it must remain disabled in production.
+The example configuration uses the generic `example.edu` domain and placeholder coordinates. Set `ALLOWED_EMAIL_DOMAIN`, `NEXT_PUBLIC_ALLOWED_EMAIL_DOMAIN`, `CAMPUS_LAT`, and `CAMPUS_LNG` for your deployment. Flyway V7 aligns seeded demo-account addresses with the configured domain; the previously applied V5 migration remains unchanged to preserve database history. Use the Firebase Emulator Suite for local authentication and Functions testing. Keep `DEV_AUTH_BYPASS` disabled unless you are intentionally running an isolated local test configuration; it must remain disabled in production.
 
 ### Run checks without Docker Compose
 

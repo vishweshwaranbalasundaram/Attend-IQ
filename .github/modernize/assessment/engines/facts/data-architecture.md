@@ -10,7 +10,7 @@ Attend-IQ V2 stores academic, attendance, identity-mapping, and workflow data in
 | Spring API | MySQL 8 | Production | MySQL Connector/J 9.4.0 and Cloud SQL Connector 1.21.0 | Cloud SQL Connector socket-factory connection | Flyway 11.14.1 |
 | Java console | MySQL | Local | MySQL Connector/J | JDBC settings supplied to the console database helper | No independent migration runner |
 
-The application has no alternate HSQLDB, PostgreSQL, or in-memory database profile. Flyway applies `src/main/resources/db/migration/V1__initial_schema.sql` through `V6__geofence_review_flags.sql`. Local demo rows are introduced by migration seed scripts and the local portal account seeder; these are not production identity provisioning.
+The application has no alternate HSQLDB, PostgreSQL, or in-memory database profile. Flyway applies `src/main/resources/db/migration/V1__initial_schema.sql` through `V7__generic_demo_account_domains.sql`. Local demo rows are introduced by migration seed scripts and the local portal account seeder; these are not production identity provisioning.
 
 ## Data Ownership per Service
 

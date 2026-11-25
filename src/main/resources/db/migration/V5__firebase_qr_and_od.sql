@@ -5,16 +5,16 @@ ALTER TABLE attendance_audit_log
     MODIFY COLUMN previous_status ENUM('PRESENT', 'LATE', 'ABSENT', 'ON_DUTY') NULL,
     MODIFY COLUMN new_status ENUM('PRESENT', 'LATE', 'ABSENT', 'ON_DUTY') NULL;
 
-UPDATE faculty SET email='k.arun@example.edu'
+UPDATE faculty SET email='k.arun@rajalakshmi.edu.in'
 WHERE email='faculty@attendiq.edu';
 
 UPDATE students SET email=CASE register_number
-    WHEN 'STU001' THEN 'aarav.s.2023.cse@example.edu'
-    WHEN 'STU002' THEN 'maya.i.2024.aids@example.edu'
-    WHEN 'STU003' THEN 'noah.p.2022.it@example.edu'
-    WHEN 'STU004' THEN 'leah.m.2023.it@example.edu'
-    WHEN 'STU005' THEN 'ishan.r.2024.ece@example.edu'
-    WHEN 'STU006' THEN 'zara.t.2022.mech@example.edu'
+    WHEN 'STU001' THEN 'aarav.s.2023.cse@rajalakshmi.edu.in'
+    WHEN 'STU002' THEN 'maya.i.2024.aids@rajalakshmi.edu.in'
+    WHEN 'STU003' THEN 'noah.p.2022.it@rajalakshmi.edu.in'
+    WHEN 'STU004' THEN 'leah.m.2023.it@rajalakshmi.edu.in'
+    WHEN 'STU005' THEN 'ishan.r.2024.ece@rajalakshmi.edu.in'
+    WHEN 'STU006' THEN 'zara.t.2022.mech@rajalakshmi.edu.in'
     ELSE email
 END
 WHERE register_number IN ('STU001','STU002','STU003','STU004','STU005','STU006');

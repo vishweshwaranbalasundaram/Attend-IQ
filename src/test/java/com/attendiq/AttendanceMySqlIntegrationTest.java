@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -31,6 +32,8 @@ class AttendanceMySqlIntegrationTest {
         Flyway.configure()
                 .dataSource(databaseUrl, databaseUser, databasePassword)
                 .locations("classpath:db/migration")
+                .placeholders(Map.of("allowed_email_domain",
+                        System.getenv().getOrDefault("ALLOWED_EMAIL_DOMAIN", "example.edu")))
                 .baselineOnMigrate(true)
                 .load()
                 .migrate();

@@ -12,8 +12,9 @@ Attend-IQ uses MySQL 8 for both the original CLI and web portal. Flyway migratio
 | `V4__demo_portal_accounts_and_attendance.sql` | Local portal account and attendance demo data |
 | `V5__firebase_qr_and_od.sql` | QR sessions and token hashes, portal audit events, and OD/medical requests |
 | `V6__geofence_review_flags.sql` | Review queue for geofence-related attendance flags |
+| `V7__generic_demo_account_domains.sql` | Rebinds sample account email addresses to the configured `ALLOWED_EMAIL_DOMAIN` |
 
-The standard Flyway lifecycle applies pending migrations at application startup. `V2` and `V4` contain demo-oriented data; do not treat their sample rows as production accounts.
+The standard Flyway lifecycle applies pending migrations at application startup. `V2` and `V4` contain demo-oriented data; `V7` maps sample emails to the configured domain. V5 is retained unchanged because it has been applied in existing databases. Do not treat sample rows as production accounts.
 
 ## Table catalog
 
